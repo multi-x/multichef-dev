@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULTI-CHEF — Gestión de Cocina e Inventario</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f2ee;
+    --sidebar-bg: #1c2333;
+    --sidebar-hover: #263047;
+    --sidebar-active: #2f3d5c;
+    --accent: #c0392b;
+    --accent2: #e67e22;
+    --text: #1a1a2e;
+    --text-muted: #7a8094;
+    --card-bg: #ffffff;
+    --border: #e8e4dc;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --sidebar-width: 220px;
+    --header-h: 60px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+    transition: width .3s;
+  }
+  .sidebar-logo {
+    padding: 22px 18px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.07);
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff; font-weight: 700;
+    font-family: 'DM Serif Display', serif;
+    flex-shrink: 0;
+  }
+  .logo-text { color: #fff; font-size: 15px; font-weight: 600; letter-spacing: .5px; }
+  .logo-sub  { color: rgba(255,255,255,.4); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+  .sidebar-section { padding: 16px 0 4px 18px; font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.4px; color: rgba(255,255,255,.28); font-weight: 600; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 18px; cursor: pointer;
+    color: rgba(255,255,255,.65); font-size: 13px;
+    transition: background .2s, color .2s; border-left: 3px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--sidebar-hover); color: #fff; }
+  .nav-item.active { background: var(--sidebar-active); color: #fff; border-left-color: var(--accent); }
+  .nav-item .ni { font-size: 15px; width: 18px; text-align: center; }
+  .nav-badge {
+    margin-left: auto; background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px;
+  }
+  .sidebar-spacer { flex: 1; }
+  .sidebar-user {
+    padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07);
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+  }
+  .user-avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--accent2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #fff; font-weight: 700; flex-shrink: 0;
+  }
+  .user-info { flex: 1; overflow: hidden; }
+  .user-name  { color: #fff; font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role  { color: rgba(255,255,255,.4); font-size: 10px; }
+  .user-logout { color: rgba(255,255,255,.3); font-size: 14px; cursor: pointer; }
+  .user-logout:hover { color: var(--accent); }
+
+  /* ── MAIN ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    height: var(--header-h); background: #fff; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px; padding: 0 24px;
+    flex-shrink: 0;
+  }
+  .topbar-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); flex: 1; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .tb-btn {
+    width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border);
+    background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--text-muted); transition: background .2s;
+    position: relative;
+  }
+  .tb-btn:hover { background: var(--bg); }
+  .tb-btn .badge {
+    position: absolute; top: 4px; right: 4px; width: 8px; height: 8px;
+    background: var(--accent); border-radius: 50%; border: 2px solid #fff;
+  }
+  .profile-switcher {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 20px;
+    padding: 4px 12px 4px 6px; cursor: pointer; font-size: 12px; color: var(--text-muted);
+  }
+  .profile-switcher .ps-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+  .pontoon-badge {
+    background: var(--sidebar-bg); color: #fff; font-size: 11px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px;
+  }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* ── PAGES ── */
+  .page { display: none; animation: fadeIn .25s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── CARDS ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .card {
+    background: var(--card-bg); border-radius: 12px; padding: 20px;
+    border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    transition: box-shadow .2s, transform .2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); transform: translateY(-1px); }
+  .card-icon { font-size: 24px; margin-bottom: 12px; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+  .card-value { font-size: 28px; font-weight: 300; color: var(--text); font-family: 'DM Serif Display', serif; }
+  .card-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .card-trend-up   { color: var(--success); font-size: 11px; }
+  .card-trend-down { color: var(--danger);  font-size: 11px; }
+
+  .card-accent { border-left: 4px solid var(--accent); }
+  .card-accent2 { border-left: 4px solid var(--accent2); }
+  .card-success { border-left: 4px solid var(--success); }
+  .card-warning { border-left: 4px solid var(--warning); }
+
+  /* ── SECTION HEADER ── */
+  .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sec-title { font-family: 'DM Serif Display', serif; font-size: 18px; color: var(--text); }
+  .sec-action { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 500; }
+  .sec-action:hover { text-decoration: underline; }
+
+  /* ── TABLE ── */
+  .table-wrap { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 24px; }
+  .table-top { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 12px; font-size: 13px; color: var(--text-muted);
+  }
+  .table-search input { border: none; background: transparent; outline: none; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; width: 160px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 16px; text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); font-weight: 600; border-bottom: 1px solid var(--border); background: #fafaf8; }
+  td { padding: 11px 16px; font-size: 13px; border-bottom: 1px solid #f4f2ee; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafaf8; }
+  .status-badge {
+    display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .sb-ok      { background: #e8f5e9; color: #27ae60; }
+  .sb-low     { background: #fff3e0; color: #f39c12; }
+  .sb-critical{ background: #fdecea; color: #e74c3c; }
+  .sb-pending { background: #e8eaf6; color: #3949ab; }
+  .sb-done    { background: #e8f5e9; color: #27ae60; }
+
+  /* ── BTN ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: none; font-family: 'DM Sans', sans-serif;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn:hover { opacity: .88; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-secondary { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
+  .btn-sm { padding: 5px 11px; font-size: 12px; }
+
+  /* ── TWO COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media(max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+  /* ── ALERT CARD ── */
+  .alert-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; }
+  .alert-card.danger  { border-left: 4px solid var(--danger); }
+  .alert-card.warning { border-left: 4px solid var(--warning); }
+  .alert-icon { font-size: 20px; flex-shrink: 0; }
+  .alert-text { flex: 1; }
+  .alert-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .alert-sub   { font-size: 11px; color: var(--text-muted); }
+
+  /* ── CHART (CSS bars) ── */
+  .chart-wrap { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .chart-title { font-size: 13px; font-weight: 600; margin-bottom: 16px; color: var(--text); }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; height: 100%; justify-content: flex-end; }
+  .bar {
+    width: 100%; background: var(--accent); border-radius: 4px 4px 0 0;
+    transition: height .8s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+  }
+  .bar.blue { background: #3d5a99; }
+  .bar.green { background: var(--success); }
+  .bar-label { font-size: 9px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+  .bar-val { font-size: 9px; font-weight: 600; color: var(--text); }
+
+  /* ── MINUTA CALENDAR ── */
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-day-header { text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--text-muted); font-weight: 600; padding: 4px; }
+  .cal-day {
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 6px;
+    min-height: 70px; cursor: pointer; transition: background .2s; position: relative;
+  }
+  .cal-day:hover { background: #fafaf8; }
+  .cal-day.today { border-color: var(--accent); background: #fff5f5; }
+  .cal-day.has-menu { background: #f0f7f0; }
+  .cal-day-num { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 4px; }
+  .cal-menu-tag { font-size: 9px; background: var(--accent); color: #fff; padding: 1px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+  /* ── RECIPE CARD ── */
+  .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+  .recipe-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: box-shadow .2s, transform .2s; }
+  .recipe-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.1); transform: translateY(-2px); }
+  .recipe-img { height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; font-size: 36px; }
+  .recipe-img.pasta { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+  .recipe-img.soup  { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+  .recipe-img.meat  { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+  .recipe-img.rice  { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+  .recipe-body { padding: 14px; }
+  .recipe-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .recipe-cat  { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .recipe-meta { display: flex; gap: 10px; }
+  .recipe-tag { font-size: 10px; background: var(--bg); color: var(--text-muted); padding: 2px 7px; border-radius: 20px; }
+
+  /* ── FORM ── */
+  .form-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-muted); }
+  input, select, textarea {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text);
+    background: var(--card-bg); outline: none; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+  /* ── NUTRICIONAL TABLE ── */
+  .nutri-table { width: 100%; border-collapse: collapse; }
+  .nutri-table td { padding: 7px 10px; font-size: 12px; border-bottom: 1px solid var(--border); }
+  .nutri-table tr:last-child td { border-bottom: none; }
+  .nutri-table .nutri-label { color: var(--text-muted); }
+  .nutri-table .nutri-val { font-weight: 600; text-align: right; }
+
+  .sello {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px 3px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin: 2px;
+  }
+  .sello.danger { background: var(--accent); color: #fff; }
+  .sello.warning { background: var(--accent2); color: #fff; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--sidebar-bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .login-box {
+    background: #fff; border-radius: 20px; padding: 40px;
+    width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+  .login-logo { text-align: center; margin-bottom: 28px; }
+  .login-logo .big-icon { font-size: 40px; margin-bottom: 6px; }
+  .login-logo h1 { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--text); }
+  .login-logo p { font-size: 12px; color: var(--text-muted); }
+  .login-box label { display: block; }
+  .login-box input { width: 100%; margin-top: 4px; }
+  .login-group { margin-bottom: 14px; }
+  .login-remember { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); margin-bottom: 20px; cursor: pointer; }
+  .login-remember input { width: auto; margin-top: 0; }
+  .login-btn { width: 100%; padding: 11px; font-size: 14px; font-weight: 600; }
+  .profile-select-row { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .profile-opt {
+    display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+    transition: border-color .2s, background .2s; font-size: 13px;
+  }
+  .profile-opt:hover { border-color: var(--accent); background: #fff5f5; }
+  .profile-opt.selected { border-color: var(--accent); background: #fff5f5; }
+  .profile-opt .po-icon { font-size: 20px; }
+  .profile-opt .po-role { font-size: 10px; color: var(--text-muted); }
+
+  /* ── PROGRESS BAR ── */
+  .prog-bar { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.34,1.56,.64,1); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+  /* tooltip */
+  .tooltip { position: relative; }
+  .tooltip:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: var(--text); color: #fff; padding: 4px 8px; border-radius: 5px;
+    font-size: 11px; white-space: nowrap; z-index: 10;
+  }
+
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .es-icon { font-size: 40px; margin-bottom: 10px; }
+  .empty-state p { font-size: 13px; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 300; background: rgba(20,20,30,.5);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-box {
+    background: #fff; border-radius: 16px; padding: 26px; width: 480px; max-width: 100%;
+    max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(0,0,0,.35);
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="big-icon">🍽️</div>
+      <h1>MULTI-CHEF</h1>
+      <p>Gestión de Cocina e Inventario · MULTI X</p>
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px">Perfil de acceso</p>
+    <div class="profile-select-row" id="profile-select">
+      <div class="profile-opt selected" data-role="admin" onclick="selectProfile(this)">
+        <span class="po-icon">🛡️</span>
+        <div><div style="font-weight:600">Administrador</div><div class="po-role">Acceso total al sistema</div></div>
+      </div>
+      <div class="profile-opt" data-role="chef" onclick="selectProfile(this)">
+        <span class="po-icon">👨‍🍳</span>
+        <div><div style="font-weight:600">Cocinero</div><div class="po-role">Consumos, recetas e inventario</div></div>
+      </div>
+      <div class="profile-opt" data-role="nutri" onclick="selectProfile(this)">
+        <span class="po-icon">🥗</span>
+        <div><div style="font-weight:600">Nutricionista</div><div class="po-role">Recetas e ingredientes</div></div>
+      </div>
+    </div>
+    <div class="login-group">
+      <label>Usuario</label>
+      <input type="text" id="login-user" value="admin@multix.cl" placeholder="usuario@empresa.cl">
+    </div>
+    <div class="login-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" value="••••••••" placeholder="Contraseña">
+    </div>
+    <label class="login-remember"><input type="checkbox" checked> Recordarme en este dispositivo</label>
+    <button class="btn btn-primary login-btn" onclick="doLogin()">Ingresar al sistema →</button>
+    <div style="text-align:center;margin-top:14px"><span style="font-size:11px;color:var(--text-muted);cursor:pointer" onclick="resetDB()">Restablecer datos de demo</span></div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">CP</div>
+    <div><div class="logo-text">MULTI-CHEF</div><div class="logo-sub">MULTI-X</div></div>
+  </div>
+
+  <div id="nav-admin">
+    <div class="sidebar-section">Principal</div>
+    <div class="nav-item active" onclick="goTo('dashboard',this)"><span class="ni">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="goTo('centros',this)"><span class="ni">🗺️</span> Centros</div>
+    <div class="sidebar-section">Operaciones</div>
+    <div class="nav-item" onclick="goTo('inventarioinicial',this)"><span class="ni">🏁</span> Inventario Inicial</div>
+    <div class="nav-item" onclick="goTo('inventario',this)"><span class="ni">🏪</span> Inventario Actual</div>
+    <div class="nav-item" onclick="goTo('compras',this)"><span class="ni">🚚</span> Despacho</div>
+    <div class="nav-item" onclick="goTo('consumosadmin',this)"><span class="ni">📝</span> Consumos</div>
+    <div class="nav-item" onclick="goTo('recepcionesadmin',this)"><span class="ni">📬</span> Recepciones</div>
+  </div>
+
+  <div id="nav-chef" style="display:none">
+    <div class="sidebar-section">Mi Trabajo</div>
+    <div class="nav-item active" onclick="goTo('platos',this)"><span class="ni">🍽️</span> Platos Preparados</div>
+    <div class="nav-item" onclick="goTo('minutas',this)"><span class="ni">📅</span> Mi Minuta</div>
+    <div class="nav-item" onclick="goTo('recetas',this)"><span class="ni">📋</span> Recetas</div>
+    <div class="nav-item" onclick="goTo('consumo',this)"><span class="ni">📝</span> Consumo</div>
+    <div class="nav-item" onclick="goTo('inventario',this)"><span class="ni">🏪</span> Inventario</div>
+    <div class="nav-item" onclick="goTo('recepcioneschef',this)"><span class="ni">📬</span> Recepciones</div>
+  </div>
+
+  <div id="nav-nutri" style="display:none">
+    <div class="sidebar-section">Gestión</div>
+    <div class="nav-item active" onclick="goTo('recetas',this)"><span class="ni">📋</span> Recetas</div>
+    <div class="nav-item" onclick="goTo('ingredientes',this)"><span class="ni">🥕</span> Ingredientes</div>
+    <div class="nav-item" onclick="goTo('minutas',this)"><span class="ni">📅</span> Minutas</div>
+  </div>
+
+  <div class="sidebar-spacer"></div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="user-avatar">A</div>
+    <div class="user-info">
+      <div class="user-name" id="user-name">pipegnr</div>
+      <div class="user-role" id="user-role">Administrador</div>
+    </div>
+    <div class="user-logout" onclick="doLogout()" title="Cerrar Sesión">⏏</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <div class="pontoon-badge" id="ponton-selector">🚢 Norte-3</div>
+      <button class="tb-btn tooltip" data-tip="Recargar" onclick="renderPage(state.page)">🔄</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page active" id="page-root"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box" id="modal-body"></div>
+</div>
+
+<script>
+/* ============================================================
+   MULTI-CHEF v3 — Motor de datos y renderizado
+   ============================================================ */
+
+const STORAGE_KEY = 'multichef_db_v3';
+
+/* ---------- Helpers de fecha / formato ---------- */
+function pad(n){ return n < 10 ? '0'+n : ''+n; }
+function dstr(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function todayStr(){ return dstr(new Date()); }
+function addDays(base, n){ const d = new Date(base); d.setDate(d.getDate()+n); return d; }
+function fmtDMY(d){ return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear(); }
+function money(n){ return '$'+Math.round(n).toLocaleString('es-CL'); }
+function nowHM(){ const d = new Date(); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function uid(arr){ return arr.length ? Math.max.apply(null, arr.map(function(x){return x.id;}))+1 : 1; }
+function esc(s){ return (s===undefined||s===null) ? '' : String(s).replace(/"/g,'&quot;'); }
+function periodRange(dateStr, period){
+  const d = new Date(dateStr+'T00:00:00');
+  if(period==='dia') return [d,d];
+  if(period==='semana'){
+    const dow = (d.getDay()+6)%7;
+    const start = addDays(d,-dow);
+    return [start, addDays(start,6)];
+  }
+  const start = new Date(d.getFullYear(), d.getMonth(), 1);
+  const end = new Date(d.getFullYear(), d.getMonth()+1, 0);
+  return [start, end];
+}
+function inRange(fechaStr, start, end){ return fechaStr >= dstr(start) && fechaStr <= dstr(end); }
+function scaleMedida(text, factor){
+  if(!text) return '';
+  const m = String(text).match(/^([\d.,\/]+)\s*(.*)$/);
+  if(!m) return text;
+  let numPart = m[1], rest = m[2], num;
+  if(numPart.indexOf('/')>-1){ const p = numPart.split('/'); num = parseFloat(p[0])/parseFloat(p[1]); }
+  else { num = parseFloat(numPart.replace(',','.')); }
+  if(isNaN(num)) return text;
+  const scaled = +(num*factor).toFixed(2);
+  return scaled + (rest ? ' '+rest : '');
+}
+
+/* ============================================================
+   SEED DE DATOS DE DEMOSTRACIÓN
+   ============================================================ */
+function seedDB(){
+  const today = new Date();
+
+  const ingredientes = [
+    {id:1, nombre:'Salmón fresco', emoji:'🐟', categoria:'Pescados', unidad:'kg', costo:4800},
+    {id:2, nombre:'Papa', emoji:'🥔', categoria:'Verduras', unidad:'kg', costo:520},
+    {id:3, nombre:'Cebolla', emoji:'🧅', categoria:'Verduras', unidad:'kg', costo:480},
+    {id:4, nombre:'Leche', emoji:'🥛', categoria:'Lácteos', unidad:'lt', costo:680},
+    {id:5, nombre:'Mantequilla', emoji:'🧈', categoria:'Lácteos', unidad:'kg', costo:3200},
+    {id:6, nombre:'Harina', emoji:'🌾', categoria:'Secos', unidad:'kg', costo:320},
+    {id:7, nombre:'Aceite oliva', emoji:'🫒', categoria:'Aceites', unidad:'lt', costo:5400},
+    {id:8, nombre:'Zanahoria', emoji:'🥕', categoria:'Verduras', unidad:'kg', costo:450},
+    {id:9, nombre:'Ajo', emoji:'🧄', categoria:'Verduras', unidad:'kg', costo:2200},
+    {id:10, nombre:'Tomate', emoji:'🍅', categoria:'Verduras', unidad:'kg', costo:900},
+    {id:11, nombre:'Carne mechada', emoji:'🥩', categoria:'Carnes', unidad:'kg', costo:7200},
+    {id:12, nombre:'Pollo', emoji:'🍗', categoria:'Carnes', unidad:'kg', costo:3400},
+    {id:13, nombre:'Arroz', emoji:'🍚', categoria:'Secos', unidad:'kg', costo:780},
+    {id:14, nombre:'Fideos spaghetti', emoji:'🍝', categoria:'Secos', unidad:'kg', costo:990},
+    {id:15, nombre:'Avena', emoji:'🥣', categoria:'Secos', unidad:'kg', costo:900},
+    {id:16, nombre:'Albahaca', emoji:'🌿', categoria:'Condimentos', unidad:'kg', costo:3000}
+  ];
+
+  const areasDef = {
+    'Chiloé':      ['Apiao','Llingua','Teuquelin','Huyar'],
+    'Aysén':       ['Ninualac','Marcacci','Chalacayec','Soledad','Mayhew','Quemada'],
+    'Cordillera':  ['Abtao','Pilolcura','Chaparano','Llaguepe','San Luis','Barquillo','Isla Cabras'],
+    'Puyuhuapi':   ['Arbolito','Pearson','Puyuhuapi 1','Puyuhuapi 2','Base Cisnes','Delta','Yelen'],
+    'Taraba':      ['Taraba 2','Taraba 3','Taraba 6','Taraba 7','Taraba 8'],
+    'Melinka':     ['Bolados','Benjamin Sur','Izaza','Jorge','King','Rowlet','Stokes']
+  };
+  let centroId = 1;
+  const centros = [];
+  Object.keys(areasDef).forEach(function(area){
+    areasDef[area].forEach(function(nombre){
+      centros.push({id:centroId++, nombre:nombre, area:area, fechaApertura: dstr(addDays(today,-365)), fechaCierre: null});
+    });
+  });
+
+  const baseNorte = {
+    1:{stockInicial:85,minimo:20,maximo:150},   2:{stockInicial:120,minimo:30,maximo:200}, 3:{stockInicial:3,minimo:10,maximo:60},
+    4:{stockInicial:18,minimo:30,maximo:80},    5:{stockInicial:4,minimo:5,maximo:25},      6:{stockInicial:50,minimo:15,maximo:100},
+    7:{stockInicial:2.5,minimo:5,maximo:20},    8:{stockInicial:25,minimo:8,maximo:60},     9:{stockInicial:6,minimo:3,maximo:20},
+    10:{stockInicial:15,minimo:8,maximo:50},    11:{stockInicial:30,minimo:10,maximo:80},   12:{stockInicial:22,minimo:10,maximo:70},
+    13:{stockInicial:60,minimo:20,maximo:150},  14:{stockInicial:18,minimo:10,maximo:60},   15:{stockInicial:12,minimo:5,maximo:40},
+    16:{stockInicial:1.5,minimo:1,maximo:10}
+  };
+  const inventarioBase = {};
+  centros.forEach(function(c, idx){
+    const factor = 0.5 + ((idx % 7) * 0.15);
+    inventarioBase[c.nombre] = {};
+    Object.keys(baseNorte).forEach(function(k){
+      inventarioBase[c.nombre][k] = {
+        stockInicial: +(baseNorte[k].stockInicial*factor).toFixed(1),
+        minimo: baseNorte[k].minimo,
+        maximo: baseNorte[k].maximo,
+        venceEnDias: 5 + ((idx*7 + (+k)*3) % 20)
+      };
+    });
+  });
+  if(inventarioBase['Apiao']){
+    inventarioBase['Apiao'][1].venceEnDias = -2;
+    inventarioBase['Apiao'][5].venceEnDias = 3;
+    inventarioBase['Apiao'][1].stockInicial = 85;
+    inventarioBase['Apiao'][2].stockInicial = 120;
+    inventarioBase['Apiao'][3].stockInicial = 3;
+  }
+
+  const recetas = [
+    {id:1, nombre:'Puré con Mechada', emoji:'🥩', clase:'meat', categoria:'Plato de fondo', porciones:10, tiempo:45, pesoPorcion:350,
+      descripcion:'Cocer las papas y preparar un puré con leche y mantequilla. Calentar la carne mechada con su jugo aparte. Servir el puré como base y la mechada encima.',
+      ingredientesPorcion:[
+        {ingredienteId:2,cantidad:0.3,medidaCasera:'1 taza'},
+        {ingredienteId:11,cantidad:0.15,medidaCasera:'3/4 taza'},
+        {ingredienteId:4,cantidad:0.05,medidaCasera:'1/4 taza'},
+        {ingredienteId:5,cantidad:0.02,medidaCasera:'1 cdta'}
+      ]},
+    {id:2, nombre:'Spaghetti con Salsa Pomodoro', emoji:'🍝', clase:'pasta', categoria:'Pastas', porciones:8, tiempo:30, pesoPorcion:320,
+      descripcion:'Cocer los fideos en agua con sal. Preparar la salsa sofriendo ajo, agregando tomate y aceite de oliva, cocinando a fuego lento. Mezclar con los fideos.',
+      ingredientesPorcion:[
+        {ingredienteId:14,cantidad:0.12,medidaCasera:'1 taza'},
+        {ingredienteId:10,cantidad:0.15,medidaCasera:'2/3 taza'},
+        {ingredienteId:9,cantidad:0.01,medidaCasera:'1 diente'},
+        {ingredienteId:7,cantidad:0.01,medidaCasera:'1 cdta'}
+      ]},
+    {id:3, nombre:'Cazuela de Vacuno', emoji:'🍲', clase:'soup', categoria:'Sopas y guisos', porciones:12, tiempo:90, pesoPorcion:400,
+      descripcion:'Cocer la carne en agua hasta ablandar. Agregar papa, zanahoria y cebolla en trozos. Cocinar hasta que las verduras estén tiernas y sazonar al gusto.',
+      ingredientesPorcion:[
+        {ingredienteId:11,cantidad:0.18,medidaCasera:'1 taza'},
+        {ingredienteId:2,cantidad:0.2,medidaCasera:'1 unidad'},
+        {ingredienteId:8,cantidad:0.1,medidaCasera:'1/2 unidad'},
+        {ingredienteId:3,cantidad:0.05,medidaCasera:'1/4 unidad'}
+      ]},
+    {id:4, nombre:'Arroz con Pollo', emoji:'🍛', clase:'rice', categoria:'Plato de fondo', porciones:10, tiempo:60, pesoPorcion:350,
+      descripcion:'Dorar el pollo con cebolla y zanahoria picadas. Agregar arroz y agua, cocinar tapado hasta que el arroz esté cocido.',
+      ingredientesPorcion:[
+        {ingredienteId:13,cantidad:0.1,medidaCasera:'1/2 taza'},
+        {ingredienteId:12,cantidad:0.15,medidaCasera:'1 presa chica'},
+        {ingredienteId:8,cantidad:0.05,medidaCasera:'1/4 unidad'},
+        {ingredienteId:3,cantidad:0.03,medidaCasera:'2 cdas'}
+      ]},
+    {id:5, nombre:'Avena con Fruta', emoji:'🥣', clase:'rice', categoria:'Desayuno', porciones:1, tiempo:10, pesoPorcion:280,
+      descripcion:'Cocinar la avena con leche a fuego bajo, revolviendo constantemente. Servir con fruta picada.',
+      ingredientesPorcion:[
+        {ingredienteId:15,cantidad:0.05,medidaCasera:'1/2 taza'},
+        {ingredienteId:4,cantidad:0.2,medidaCasera:'1 taza'}
+      ]}
+  ];
+
+  const minutas = {};
+  const y = today.getFullYear(), m = today.getMonth();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const sample = [1,2,3,4,1,3,2,4,1,3];
+  let si = 0;
+  for(let d=1; d<=daysInMonth; d++){
+    if(d % 3 !== 0){
+      const dd = new Date(y,m,d);
+      minutas[dstr(dd)] = { almuerzo: sample[si % sample.length], cena: sample[(si+1) % sample.length] };
+      si++;
+    }
+  }
+  minutas[todayStr()] = { almuerzo: 3, cena: 1 };
+
+  const consumosPlatos = [
+    {id:1, fecha: todayStr(), hora:'08:00', recetaId:5, recetaManual:null, personalInterno:10, personalExterno:0, empresaExterna:'', servicio:'Desayuno', ponton:'Apiao'},
+    {id:2, fecha: todayStr(), hora:'13:00', recetaId:3, recetaManual:null, personalInterno:9, personalExterno:3, empresaExterna:'Naviera Sur', servicio:'Almuerzo', ponton:'Apiao'},
+    {id:3, fecha: dstr(addDays(today,-1)), hora:'13:10', recetaId:1, recetaManual:null, personalInterno:11, personalExterno:1, empresaExterna:'', servicio:'Almuerzo', ponton:'Apiao'},
+    {id:4, fecha: dstr(addDays(today,-1)), hora:'19:30', recetaId:4, recetaManual:null, personalInterno:8, personalExterno:0, empresaExterna:'', servicio:'Cena', ponton:'Apiao'},
+    {id:5, fecha: dstr(addDays(today,-2)), hora:'13:00', recetaId:2, recetaManual:null, personalInterno:7, personalExterno:2, empresaExterna:'', servicio:'Almuerzo', ponton:'Llingua'}
+  ];
+
+  const consumosInventario = [
+    {id:1, ingredienteId:2, ponton:'Apiao', cantidad:4, servicio:'Almuerzo', fecha: todayStr()},
+    {id:2, ingredienteId:11, ponton:'Apiao', cantidad:1.8, servicio:'Almuerzo', fecha: todayStr()},
+    {id:3, ingredienteId:15, ponton:'Apiao', cantidad:0.6, servicio:'Desayuno', fecha: todayStr()},
+    {id:4, ingredienteId:2, ponton:'Apiao', cantidad:3, servicio:'Cena', fecha: dstr(addDays(today,-1))}
+  ];
+
+  const guiasDespacho = [
+    {id:1, numeroGuia:'GD-2026-0114', ponton:'Apiao', fecha: dstr(addDays(today,-3)),
+      items:[{ingredienteId:1,cantidad:20},{ingredienteId:5,cantidad:2}],
+      recepcion:{estado:'pendiente', observaciones:'', fechaRecepcion:null}},
+    {id:2, numeroGuia:'GD-2026-0115', ponton:'Apiao', fecha: dstr(addDays(today,-1)),
+      items:[{ingredienteId:2,cantidad:30}],
+      recepcion:{estado:'conforme', observaciones:'', fechaRecepcion: dstr(addDays(today,-1))}},
+    {id:3, numeroGuia:'GD-2026-0116', ponton:'Llingua', fecha: dstr(addDays(today,-2)),
+      items:[{ingredienteId:12,cantidad:15},{ingredienteId:8,cantidad:10}],
+      recepcion:{estado:'observaciones', observaciones:'Faltaron 2kg de zanahoria respecto a lo indicado en la guía.', fechaRecepcion: dstr(addDays(today,-1))}}
+  ];
+
+  const usuarios = [
+    {usuario:'pipegnr', rol:'admin', ponton:'Apiao'},
+    {usuario:'chef.apiao', rol:'chef', ponton:'Apiao'},
+    {usuario:'nutri.1', rol:'nutri', ponton:'Todos'}
+  ];
+
+  return {
+    centros: centros,
+    ingredientes: ingredientes,
+    inventarioBase: inventarioBase,
+    recetas: recetas,
+    minutas: minutas,
+    consumosPlatos: consumosPlatos,
+    consumosInventario: consumosInventario,
+    guiasDespacho: guiasDespacho,
+    usuarios: usuarios,
+    config: { alertaVencimientoDias:15 }
+  };
+}
+
+function loadDB(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){ try { return JSON.parse(raw); } catch(e){} }
+  const db = seedDB();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  return db;
+}
+function saveDB(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(DB)); }
+function resetDB(){
+  if(confirm('¿Restablecer todos los datos de la demo? Se perderá lo registrado en este navegador.')){
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+  }
+}
+
+let DB = loadDB();
+let state = { role:'admin', ponton: 'Apiao', page:'dashboard', dashboardCentros: null };
+
+/* ============================================================
+   CENTROS / ÁREAS
+   ============================================================ */
+function centrosActivos(){
+  const hoy = todayStr();
+  return DB.centros.filter(function(c){ return !c.fechaCierre || c.fechaCierre > hoy; });
+}
+function nombresCentros(){ return centrosActivos().map(function(c){ return c.nombre; }); }
+function areasAgrupadas(){
+  const map = {};
+  centrosActivos().forEach(function(c){
+    if(!map[c.area]) map[c.area] = [];
+    map[c.area].push(c.nombre);
+  });
+  return map;
+}
+function centroPorNombre(nombre){ return DB.centros.find(function(c){ return c.nombre===nombre; }); }
+function ensureInventarioParaCentro(nombreCentro){
+  if(!DB.inventarioBase[nombreCentro]){
+    DB.inventarioBase[nombreCentro] = {};
+    DB.ingredientes.forEach(function(i){
+      DB.inventarioBase[nombreCentro][i.id] = {stockInicial:0, minimo:0, maximo:0, venceEnDias:30};
+    });
+  }
+}
+
+/* ============================================================
+   LÓGICA DE NEGOCIO
+   ============================================================ */
+function ing(id){ return DB.ingredientes.find(function(i){ return i.id === +id; }); }
+function receta(id){ return DB.recetas.find(function(r){ return r.id === +id; }); }
+
+function stockActual(ingredienteId, ponton){
+  const base = DB.inventarioBase[ponton] && DB.inventarioBase[ponton][ingredienteId];
+  if(!base) return 0;
+  const desp = DB.guiasDespacho.filter(function(g){ return g.ponton===ponton; })
+    .reduce(function(s,g){
+      const item = g.items.find(function(it){ return it.ingredienteId===+ingredienteId; });
+      return s + (item ? item.cantidad : 0);
+    },0);
+  const cons = DB.consumosInventario.filter(function(c){ return c.ingredienteId===+ingredienteId && c.ponton===ponton; })
+    .reduce(function(s,c){ return s+c.cantidad; },0);
+  return +(base.stockInicial + desp - cons).toFixed(2);
+}
+function minimoDe(ingredienteId, ponton){
+  const b = DB.inventarioBase[ponton] && DB.inventarioBase[ponton][ingredienteId];
+  return b ? b.minimo : 0;
+}
+function maximoDe(ingredienteId, ponton){
+  const b = DB.inventarioBase[ponton] && DB.inventarioBase[ponton][ingredienteId];
+  return b ? (b.maximo||0) : 0;
+}
+function estadoStock(actual, minimo, maximo){
+  if(minimo<=0 && maximo<=0) return 'ok';
+  if(actual <= minimo) return 'bajo';
+  if(maximo>0 && actual >= maximo) return 'alto';
+  return 'ok';
+}
+function estadoBadge(e){
+  if(e==='ok') return '<span class="status-badge sb-ok">OK</span>';
+  if(e==='alto') return '<span class="status-badge sb-low" style="background:#eaf2ff;color:#2563eb">Alto</span>';
+  return '<span class="status-badge sb-critical">Bajo</span>';
+}
+function ordenarPorCritico(lista, getEstado){
+  const peso = {bajo:0, ok:1, alto:2};
+  return lista.slice().sort(function(a,b){
+    return (peso[getEstado(a)]!==undefined?peso[getEstado(a)]:1) - (peso[getEstado(b)]!==undefined?peso[getEstado(b)]:1);
+  });
+}
+function costoPorcionReceta(r){
+  return r.ingredientesPorcion.reduce(function(s,ip){
+    const i = ing(ip.ingredienteId);
+    return s + (i ? ip.cantidad*i.costo : 0);
+  },0);
+}
+
+/* ============================================================
+   MODAL / UTILIDADES DE UI
+   ============================================================ */
+function openModal(html){
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('modal-body').innerHTML = html;
+}
+function closeModal(){
+  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById('modal-body').innerHTML = '';
+}
+function filterTable(inputId, tbodyId){
+  const q = document.getElementById(inputId).value.toLowerCase();
+  document.querySelectorAll('#'+tbodyId+' tr').forEach(function(tr){
+    const name = (tr.getAttribute('data-name')||tr.textContent).toLowerCase();
+    tr.style.display = name.indexOf(q) !== -1 ? '' : 'none';
+  });
+}
+function ingredienteOptions(selectedId, filterCategoria){
+  let list = DB.ingredientes;
+  if(filterCategoria) list = list.filter(function(i){ return i.categoria===filterCategoria; });
+  return list.map(function(i){
+    return '<option value="'+i.id+'"'+(String(i.id)===String(selectedId)?' selected':'')+'>'+i.emoji+' '+i.nombre+' ('+i.unidad+')</option>';
+  }).join('');
+}
+function categoriaDatalist(){
+  const cats = Array.from(new Set(DB.ingredientes.map(function(i){ return i.categoria; })));
+  return '<datalist id="cat-list">'+cats.map(function(c){ return '<option value="'+c+'">'; }).join('')+'</datalist>';
+}
+function centroOptionsAgrupados(selected){
+  const grupos = areasAgrupadas();
+  return Object.keys(grupos).map(function(area){
+    return '<optgroup label="'+area+'">'+grupos[area].map(function(c){
+      return '<option value="'+c+'"'+(c===selected?' selected':'')+'>'+c+'</option>';
+    }).join('')+'</optgroup>';
+  }).join('');
+}
+/* ============================================================
+   RENDER: INGREDIENTES (Nutricionista — catálogo, mín/máx, filtro categoría)
+   ============================================================ */
+function renderIngredientes(){
+  const cats = Array.from(new Set(DB.ingredientes.map(function(i){return i.categoria;})));
+  state.ingCatFiltro = state.ingCatFiltro || '';
+  const lista = DB.ingredientes.filter(function(i){ return !state.ingCatFiltro || i.categoria===state.ingCatFiltro; });
+  const rows = lista.map(function(i, idx){
+    return '<tr data-name="'+i.nombre.toLowerCase()+'">'+
+      '<td>'+(idx+1)+'</td><td>'+i.emoji+' '+i.nombre+'</td><td>'+i.categoria+'</td><td>'+i.unidad+'</td>'+
+      '<td>'+money(i.costo)+'</td>'+
+      '<td style="display:flex;gap:6px"><button class="btn btn-secondary btn-sm" onclick="openEditIngrediente('+i.id+')">Editar</button>'+
+      '<button class="btn btn-secondary btn-sm" onclick="openMinimoIngrediente('+i.id+')">Mín/Máx por centro</button></td></tr>';
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Ingredientes</span><button class="btn btn-primary btn-sm" onclick="openAddIngrediente()">+ Nuevo ingrediente</button></div>'+
+  '<div class="table-wrap"><div class="table-top">'+
+    '<div style="font-size:13px;color:var(--text-muted)">'+lista.length+' de '+DB.ingredientes.length+' ingredientes</div>'+
+    '<div style="display:flex;gap:10px">'+
+      '<select onchange="setIngCatFiltro(this.value)"><option value="">Todas las categorías</option>'+cats.map(function(c){return '<option value="'+c+'"'+(state.ingCatFiltro===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
+      '<div class="table-search"><span>🔍</span><input id="ing-search" oninput="filterTable(\'ing-search\',\'ing-tbody\')" placeholder="Buscar ingrediente..."></div>'+
+    '</div>'+
+  '</div>'+
+  '<table><thead><tr><th>#</th><th>Nombre</th><th>Categoría</th><th>Unidad</th><th>Costo Neto</th><th></th></tr></thead>'+
+  '<tbody id="ing-tbody">'+rows+'</tbody></table></div>'
+  );
+}
+function setIngCatFiltro(v){ state.ingCatFiltro = v; renderPage('ingredientes'); }
+function openAddIngrediente(){
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Nuevo ingrediente</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre</label><input id="f-nombre" placeholder="Ej: Zapallo"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Categoría</label><input id="f-categoria" list="cat-list" placeholder="Ej: Verduras">'+categoriaDatalist()+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div class="form-group"><label>Unidad</label><select id="f-unidad"><option>kg</option><option>lt</option><option>un</option><option>gr</option></select></div>'+
+      '<div class="form-group"><label>Costo neto</label><input id="f-costo" type="number" value="0"></div>'+
+    '</div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveIngrediente()">Guardar</button></div>'
+  );
+}
+function openEditIngrediente(id){
+  const i = ing(id);
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Editar ingrediente</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre</label><input id="f-nombre" value="'+esc(i.nombre)+'"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Categoría</label><input id="f-categoria" list="cat-list" value="'+esc(i.categoria)+'">'+categoriaDatalist()+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div class="form-group"><label>Unidad</label><select id="f-unidad">'+
+        ['kg','lt','un','gr'].map(function(u){return '<option'+(i.unidad===u?' selected':'')+'>'+u+'</option>';}).join('')+
+      '</select></div>'+
+      '<div class="form-group"><label>Costo neto</label><input id="f-costo" type="number" value="'+i.costo+'"></div>'+
+    '</div>'+
+    '<div class="form-actions">'+
+      '<button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="saveIngrediente('+id+')">Guardar</button>'+
+      '<button class="btn" style="background:var(--danger);color:#fff" onclick="deleteIngrediente('+id+')">Eliminar</button>'+
+    '</div>'
+  );
+}
+function saveIngrediente(editId){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const categoria = document.getElementById('f-categoria').value.trim() || 'General';
+  const unidad = document.getElementById('f-unidad').value;
+  const costo = parseFloat(document.getElementById('f-costo').value)||0;
+  if(!nombre){ alert('Ingresa un nombre'); return; }
+  if(editId){
+    Object.assign(ing(editId), {nombre:nombre, categoria:categoria, unidad:unidad, costo:costo});
+  } else {
+    const id = uid(DB.ingredientes);
+    DB.ingredientes.push({id:id, nombre:nombre, emoji:'🧺', categoria:categoria, unidad:unidad, costo:costo});
+    nombresCentros().forEach(function(nombreCentro){
+      ensureInventarioParaCentro(nombreCentro);
+      DB.inventarioBase[nombreCentro][id] = {stockInicial:0, minimo:0, maximo:0, venceEnDias:30};
+    });
+  }
+  saveDB(); closeModal(); renderPage('ingredientes');
+}
+function deleteIngrediente(id){
+  if(!confirm('¿Eliminar este ingrediente? Esta acción no se puede deshacer.')) return;
+  DB.ingredientes = DB.ingredientes.filter(function(i){ return i.id!==id; });
+  saveDB(); closeModal(); renderPage('ingredientes');
+}
+function openMinimoIngrediente(id){
+  const i = ing(id);
+  const rows = nombresCentros().map(function(p){
+    ensureInventarioParaCentro(p);
+    const b = DB.inventarioBase[p][id] || {minimo:0,maximo:0};
+    return '<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px">'+
+      '<label style="text-transform:none;font-weight:500;font-size:13px">'+p+'</label>'+
+      '<input type="number" placeholder="Mínimo" id="min-'+p+'" value="'+(b.minimo||0)+'">'+
+      '<input type="number" placeholder="Máximo" id="max-'+p+'" value="'+(b.maximo||0)+'">'+
+    '</div>';
+  }).join('');
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:6px">Mínimo y máximo por centro</h3>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">'+i.emoji+' '+i.nombre+' ('+i.unidad+')</div>'+
+    '<div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-bottom:6px;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase">'+
+      '<span>Centro</span><span>Mínimo</span><span>Máximo</span></div>'+
+    '<div style="max-height:320px;overflow-y:auto">'+rows+'</div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveMinimos('+id+')">Guardar</button></div>'
+  );
+}
+function saveMinimos(id){
+  nombresCentros().forEach(function(p){
+    const min = parseFloat(document.getElementById('min-'+p).value)||0;
+    const max = parseFloat(document.getElementById('max-'+p).value)||0;
+    DB.inventarioBase[p][id].minimo = min;
+    DB.inventarioBase[p][id].maximo = max;
+  });
+  saveDB(); closeModal(); renderPage(state.page);
+}
+
+/* ============================================================
+   RENDER: RECETAS
+   ============================================================ */
+function renderRecetas(){
+  if(state.role==='nutri' && state.editingRecetaId){
+    return renderRecetaEditor(state.editingRecetaId);
+  }
+  const addBtn = (state.role==='nutri') ? '<button class="btn btn-primary btn-sm" onclick="openAddReceta()">+ Nueva receta</button>' : '';
+  const cards = DB.recetas.map(function(r){
+    const clickFn = (state.role==='nutri') ? "editReceta("+r.id+")" : "openRecetaDetail("+r.id+")";
+    return '<div class="recipe-card" onclick="'+clickFn+'">'+
+      '<div class="recipe-img '+r.clase+'">'+r.emoji+'</div>'+
+      '<div class="recipe-body">'+
+        '<div class="recipe-name">'+r.nombre+'</div>'+
+        '<div class="recipe-cat">'+r.categoria+' · '+money(costoPorcionReceta(r))+' / porción</div>'+
+        '<div class="recipe-meta"><span class="recipe-tag">👥 '+r.porciones+' porciones</span><span class="recipe-tag">⏱ '+r.tiempo+' min</span></div>'+
+      '</div></div>';
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Recetas</span>'+addBtn+'</div>'+
+  '<div class="recipe-grid">'+cards+'</div>'
+  );
+}
+function openRecetaDetail(id){
+  openModal(recetaDetalleHtml(id, receta(id).porciones));
+}
+function recetaDetalleHtml(id, personas){
+  const r = receta(id);
+  const factor = personas / r.porciones;
+  const rows = r.ingredientesPorcion.map(function(ip){
+    const i = ing(ip.ingredienteId);
+    const gramos = +(ip.cantidad*factor).toFixed(2);
+    return '<tr><td>'+(i?i.emoji+' '+i.nombre:'?')+'</td><td>'+gramos+' '+(i?i.unidad:'')+'</td><td>'+scaleMedida(ip.medidaCasera, factor)+'</td></tr>';
+  }).join('');
+  return (
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:4px">'+r.emoji+' '+r.nombre+'</h3>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">'+r.categoria+' · ⏱ '+r.tiempo+' min · '+money(costoPorcionReceta(r))+'/porción</div>'+
+    '<div style="font-weight:600;font-size:12px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)">Preparación</div>'+
+    '<p style="font-size:13px;line-height:1.5;margin-bottom:16px">'+r.descripcion+'</p>'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">'+
+      '<label style="text-transform:none;font-weight:600;font-size:12px">Cocinar para</label>'+
+      '<input type="number" min="1" id="detalle-personas" value="'+personas+'" style="width:80px" oninput="refreshRecetaDetalle('+id+')">'+
+      '<span style="font-size:12px;color:var(--text-muted)">personas (receta base: '+r.porciones+')</span>'+
+    '</div>'+
+    '<div style="font-weight:600;font-size:12px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted)">Ingredientes</div>'+
+    '<table class="nutri-table" id="detalle-ing-tabla"><thead><tr><th style="font-size:10px;color:var(--text-muted)">Producto</th><th style="font-size:10px;color:var(--text-muted)">Cantidad</th><th style="font-size:10px;color:var(--text-muted)">Medida casera</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div class="form-actions"><button class="btn btn-primary" style="flex:1" onclick="closeModal()">Cerrar</button></div>'
+  );
+}
+function refreshRecetaDetalle(id){
+  const personas = parseFloat(document.getElementById('detalle-personas').value)||1;
+  document.getElementById('modal-body').innerHTML = recetaDetalleHtml(id, personas);
+}
+function ingRowHtmlMC(rowIdx, selectedId, cantidad, medidaCasera){
+  return '<div class="ing-row" style="display:flex;gap:8px;margin-bottom:8px" data-row="'+rowIdx+'">'+
+    '<select class="ing-row-select" style="flex:2">'+ingredienteOptions(selectedId)+'</select>'+
+    '<input class="ing-row-cant" type="number" step="0.01" style="flex:1" value="'+(cantidad||0.1)+'" placeholder="Cantidad">'+
+    '<input class="ing-row-medida" type="text" style="flex:1" value="'+esc(medidaCasera||'')+'" placeholder="Medida casera">'+
+    '<button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">✕</button>'+
+  '</div>';
+}
+function collectIngRowsMC(containerId){
+  const rows = [];
+  document.querySelectorAll('#'+containerId+' .ing-row').forEach(function(r){
+    const id = parseInt(r.querySelector('.ing-row-select').value,10);
+    const cant = parseFloat(r.querySelector('.ing-row-cant').value)||0;
+    const medida = r.querySelector('.ing-row-medida').value.trim();
+    if(id && cant>0) rows.push({ingredienteId:id, cantidad:cant, medidaCasera:medida});
+  });
+  return rows;
+}
+function openAddReceta(){
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Nueva receta</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre</label><input id="f-nombre" placeholder="Ej: Lentejas guisadas"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div class="form-group"><label>Categoría</label><input id="f-categoria" placeholder="Plato de fondo"></div>'+
+      '<div class="form-group"><label>Porciones base</label><input id="f-porciones" type="number" value="10"></div>'+
+      '<div class="form-group"><label>Tiempo (min)</label><input id="f-tiempo" type="number" value="45"></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Peso por porción (gr)</label><input id="f-peso" type="number" value="300"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Preparación</label><textarea id="f-descripcion" rows="3" style="resize:vertical"></textarea></div>'+
+    '<label style="display:block;margin-bottom:6px">Ingredientes por 1 porción (cantidad + medida casera)</label>'+
+    '<div id="ing-rows-container">'+ingRowHtmlMC(0)+'</div>'+
+    '<button type="button" class="btn btn-secondary btn-sm" style="margin-bottom:16px" onclick="document.getElementById(\'ing-rows-container\').insertAdjacentHTML(\'beforeend\', ingRowHtmlMC(Date.now()))">+ Agregar ingrediente</button>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveReceta()">Guardar</button></div>'
+  );
+}
+function saveReceta(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const categoria = document.getElementById('f-categoria').value.trim() || 'General';
+  const porciones = parseInt(document.getElementById('f-porciones').value,10)||1;
+  const tiempo = parseInt(document.getElementById('f-tiempo').value,10)||0;
+  const pesoPorcion = parseInt(document.getElementById('f-peso').value,10)||0;
+  const descripcion = document.getElementById('f-descripcion').value.trim();
+  const ingredientesPorcion = collectIngRowsMC('ing-rows-container');
+  if(!nombre || !ingredientesPorcion.length){ alert('Completa el nombre y al menos un ingrediente'); return; }
+  const clases = ['meat','pasta','soup','rice'];
+  const id = uid(DB.recetas);
+  DB.recetas.push({
+    id:id, nombre:nombre, emoji:'🍽️', clase: clases[id % clases.length], categoria:categoria,
+    porciones:porciones, tiempo:tiempo, pesoPorcion:pesoPorcion, descripcion:descripcion, ingredientesPorcion:ingredientesPorcion
+  });
+  saveDB(); closeModal(); renderPage('recetas');
+}
+function editReceta(id){ state.editingRecetaId = id; renderPage('recetas'); }
+function closeRecetaEditor(){ state.editingRecetaId = null; renderPage('recetas'); }
+function renderRecetaEditor(id){
+  const r = receta(id);
+  if(!r) { state.editingRecetaId = null; return renderRecetas(); }
+  const selector = '<select onchange="editReceta(parseInt(this.value,10))" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+
+    DB.recetas.map(function(x){ return '<option value="'+x.id+'"'+(x.id===r.id?' selected':'')+'>'+x.emoji+' '+x.nombre+'</option>'; }).join('')+'</select>';
+  const rows = r.ingredientesPorcion.map(function(ip){
+    return ingRowHtmlMC('e'+ip.ingredienteId+'_'+Math.random().toString(36).slice(2), ip.ingredienteId, ip.cantidad, ip.medidaCasera);
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Editar Receta</span><div style="display:flex;gap:10px">'+selector+'<button class="btn btn-secondary btn-sm" onclick="closeRecetaEditor()">← Volver al listado</button></div></div>'+
+  '<div style="background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px">'+
+    '<span style="font-size:20px">'+r.emoji+'</span>'+
+    '<div><strong id="editor-nombre-preview">'+r.nombre+'</strong> &nbsp;·&nbsp; Costo por porción: <strong>'+money(costoPorcionReceta(r))+'</strong> &nbsp;·&nbsp; Peso por porción: <strong>'+(r.pesoPorcion||0)+' gr</strong></div>'+
+  '</div>'+
+  '<div class="card">'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre de la preparación</label><input id="ed-nombre" value="'+esc(r.nombre)+'"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">'+
+      '<div class="form-group"><label>Categoría</label><input id="ed-categoria" value="'+esc(r.categoria)+'"></div>'+
+      '<div class="form-group"><label>Peso por porción (gr)</label><input id="ed-peso" type="number" value="'+(r.pesoPorcion||0)+'"></div>'+
+    '</div>'+
+    '<div class="form-group" style="margin-bottom:16px"><label>Preparación</label><textarea id="ed-descripcion" rows="3" style="resize:vertical">'+esc(r.descripcion)+'</textarea></div>'+
+    '<label style="display:block;margin-bottom:6px">Ingredientes por 1 porción (cantidad + medida casera)</label>'+
+    '<div id="ing-rows-container">'+rows+'</div>'+
+    '<button type="button" class="btn btn-secondary btn-sm" style="margin-bottom:16px" onclick="document.getElementById(\'ing-rows-container\').insertAdjacentHTML(\'beforeend\', ingRowHtmlMC(Date.now()))">+ Agregar ingrediente</button>'+
+    '<button class="btn btn-primary" onclick="saveRecetaEdit('+r.id+')">Guardar cambios</button>'+
+  '</div>'
+  );
+}
+function saveRecetaEdit(id){
+  const r = receta(id);
+  r.nombre = document.getElementById('ed-nombre').value.trim() || r.nombre;
+  r.categoria = document.getElementById('ed-categoria').value.trim() || r.categoria;
+  r.pesoPorcion = parseInt(document.getElementById('ed-peso').value,10)||0;
+  r.descripcion = document.getElementById('ed-descripcion').value.trim();
+  const rows = collectIngRowsMC('ing-rows-container');
+  if(!rows.length){ alert('Debe existir al menos un ingrediente'); return; }
+  r.ingredientesPorcion = rows;
+  saveDB(); renderPage('recetas');
+}
+/* ============================================================
+   RENDER: MINUTAS
+   ============================================================ */
+function renderMinutas(){
+  const today = new Date();
+  const y = today.getFullYear(), m = today.getMonth();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const firstDow = (new Date(y,m,1).getDay()+6)%7;
+  const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const editable = state.role==='nutri';
+
+  let cells = '';
+  for(let k=0;k<firstDow;k++) cells += '<div class="cal-day"></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const key = dstr(new Date(y,m,d));
+    const menu = DB.minutas[key];
+    const isToday = key===todayStr();
+    let tags = '';
+    if(menu){
+      if(menu.almuerzo){ const r=receta(menu.almuerzo); if(r) tags += '<div class="cal-menu-tag">Almuerzo: '+r.nombre+'</div>'; }
+      if(menu.cena){ const r=receta(menu.cena); if(r) tags += '<div class="cal-menu-tag" style="background:var(--accent2)">Cena: '+r.nombre+'</div>'; }
+    }
+    const cls = 'cal-day'+(isToday?' today':'')+(menu?' has-menu':'');
+    const click = editable ? ' onclick="openProgramarMinuta(\''+key+'\')"' : '';
+    cells += '<div class="'+cls+'"'+click+'><div class="cal-day-num" style="'+(isToday?'color:var(--accent);font-weight:700':'')+'">'+d+'</div>'+tags+'</div>';
+  }
+  const addBtn = editable ? '<button class="btn btn-primary btn-sm" onclick="openProgramarMinuta(todayStr())">+ Programar receta</button>' : '';
+  return (
+  '<div class="sec-header"><span class="sec-title">'+(state.role==='chef'?'Mi Minuta — ':'Minutas — ')+monthNames[m]+' '+y+'</span>'+addBtn+'</div>'+
+  '<div class="card" style="padding:20px;margin-bottom:20px"><div class="cal-grid">'+
+    '<div class="cal-day-header">Lun</div><div class="cal-day-header">Mar</div><div class="cal-day-header">Mié</div><div class="cal-day-header">Jue</div><div class="cal-day-header">Vie</div><div class="cal-day-header">Sáb</div><div class="cal-day-header">Dom</div>'+
+    cells+
+  '</div></div>'+
+  (editable ? '' : '<div style="font-size:12px;color:var(--text-muted)">Vista de solo lectura — la minuta la define el perfil Nutricionista y se muestra igual a todos los Cocineros.</div>')
+  );
+}
+function openProgramarMinuta(dateKey){
+  const menu = DB.minutas[dateKey] || {};
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Programar minuta — '+dateKey+'</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Almuerzo</label><select id="f-almuerzo"><option value="">— Sin asignar —</option>'+
+      DB.recetas.map(function(r){ return '<option value="'+r.id+'"'+(menu.almuerzo===r.id?' selected':'')+'>'+r.emoji+' '+r.nombre+'</option>'; }).join('')+
+    '</select></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Cena</label><select id="f-cena"><option value="">— Sin asignar —</option>'+
+      DB.recetas.map(function(r){ return '<option value="'+r.id+'"'+(menu.cena===r.id?' selected':'')+'>'+r.emoji+' '+r.nombre+'</option>'; }).join('')+
+    '</select></div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveMinuta(\''+dateKey+'\')">Guardar</button></div>'
+  );
+}
+function saveMinuta(dateKey){
+  const almuerzo = parseInt(document.getElementById('f-almuerzo').value,10) || null;
+  const cena = parseInt(document.getElementById('f-cena').value,10) || null;
+  if(!almuerzo && !cena){ delete DB.minutas[dateKey]; }
+  else { DB.minutas[dateKey] = {almuerzo:almuerzo, cena:cena}; }
+  saveDB(); closeModal(); renderPage('minutas');
+}
+
+/* ============================================================
+   RENDER: PLATOS PREPARADOS (Nuevo Consumo / Últimos consumos hoy / Total porciones hoy)
+   ============================================================ */
+function renderPlatos(){
+  const p = state.ponton;
+  const hoy = todayStr();
+  const recetaOpts = '<option value="">— Selecciona una receta —</option>'+
+    DB.recetas.map(function(r){ return '<option value="'+r.id+'">'+r.emoji+' '+r.nombre+'</option>'; }).join('')+
+    '<option value="otra">✏️ Otra Receta (ingresar manualmente)</option>';
+
+  const consumosHoy = DB.consumosPlatos.filter(function(c){ return c.ponton===p && c.fecha===hoy; });
+  const rows = consumosHoy.map(function(c){
+    const nombre = c.recetaId ? (receta(c.recetaId) ? receta(c.recetaId).nombre : '—') : (c.recetaManual || '—');
+    return '<tr><td>'+c.servicio+'</td><td>'+nombre+'</td><td>'+c.personalInterno+'</td><td>'+c.personalExterno+'</td><td>'+(c.personalInterno+c.personalExterno)+'</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">Sin consumos registrados hoy</td></tr>';
+
+  const totalInt = consumosHoy.reduce(function(s,c){return s+c.personalInterno;},0);
+  const totalExt = consumosHoy.reduce(function(s,c){return s+c.personalExterno;},0);
+  const porServicio = {};
+  consumosHoy.forEach(function(c){ porServicio[c.servicio] = (porServicio[c.servicio]||0) + c.personalInterno + c.personalExterno; });
+  const desglose = ['Desayuno','Almuerzo','Cena'].map(function(s){ return s+': '+(porServicio[s]||0); }).join(' · ');
+
+  return (
+  '<div class="sec-header"><span class="sec-title">Platos Preparados — '+p+'</span></div>'+
+  '<div class="two-col">'+
+    '<div class="form-card">'+
+      '<div style="font-size:14px;font-weight:700;margin-bottom:18px">📝 Nuevo Consumo</div>'+
+      '<div class="form-group" style="margin-bottom:14px"><label>Fecha</label><input id="c-fecha" type="date" value="'+hoy+'"></div>'+
+      '<div class="form-group" style="margin-bottom:14px"><label>Receta</label><select id="c-receta" onchange="toggleOtraReceta()">'+recetaOpts+'</select></div>'+
+      '<div class="form-group" id="c-otra-wrap" style="margin-bottom:14px;display:none"><label>Nombre de la receta</label><input id="c-otra-receta" type="text" placeholder="Escribe el nombre de la preparación"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">'+
+        '<div class="form-group"><label>Personal Interno</label><input id="c-interno" type="number" value="0" min="0"></div>'+
+        '<div class="form-group"><label>Personal Externo</label><input id="c-externo" type="number" value="0" min="0"></div>'+
+      '</div>'+
+      '<div class="form-group" style="margin-bottom:14px"><label>Empresa Externa</label><input id="c-empresa" type="text" placeholder="Nombre empresa (opcional)"></div>'+
+      '<div class="form-group" style="margin-bottom:14px"><label>Servicio</label><select id="c-servicio"><option>Desayuno</option><option selected>Almuerzo</option><option>Cena</option></select></div>'+
+      '<div style="display:flex;gap:10px;margin-top:20px">'+
+        '<button class="btn btn-secondary" style="flex:1" onclick="registrarConsumo(true)">Registrar y crear otro</button>'+
+        '<button class="btn btn-primary" style="flex:1" onclick="registrarConsumo(false)">Registrar</button>'+
+      '</div>'+
+    '</div>'+
+    '<div>'+
+      '<div class="sec-header"><span class="sec-title">Últimos consumos hoy</span></div>'+
+      '<div class="table-wrap"><table><thead><tr><th>Servicio</th><th>Receta</th><th>Int.</th><th>Ext.</th><th>Total</th></tr></thead>'+
+      '<tbody id="consumos-tbody">'+rows+'</tbody></table></div>'+
+      '<div class="card card-success" style="margin-top:12px">'+
+        '<div class="card-label">Total porciones hoy</div>'+
+        '<div class="card-value" id="total-porciones-hoy">'+(totalInt+totalExt)+'</div>'+
+        '<div class="card-sub">'+totalInt+' internos · '+totalExt+' externos<br>'+desglose+'</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>'
+  );
+}
+function toggleOtraReceta(){
+  const v = document.getElementById('c-receta').value;
+  document.getElementById('c-otra-wrap').style.display = (v==='otra') ? 'block' : 'none';
+}
+function registrarConsumo(seguirCreando){
+  const fecha = document.getElementById('c-fecha').value || todayStr();
+  const recetaSel = document.getElementById('c-receta').value;
+  const personalInterno = parseInt(document.getElementById('c-interno').value,10)||0;
+  const personalExterno = parseInt(document.getElementById('c-externo').value,10)||0;
+  const empresaExterna = document.getElementById('c-empresa').value.trim();
+  const servicio = document.getElementById('c-servicio').value;
+
+  let recetaId = null, recetaManual = null;
+  if(recetaSel === 'otra'){
+    recetaManual = document.getElementById('c-otra-receta').value.trim();
+    if(!recetaManual){ alert('Escribe el nombre de la receta manual.'); return; }
+  } else if(recetaSel){
+    recetaId = parseInt(recetaSel,10);
+  } else {
+    alert('Selecciona una receta.'); return;
+  }
+  if(personalInterno===0 && personalExterno===0){
+    alert('Ingresa al menos una persona (interna o externa).'); return;
+  }
+  DB.consumosPlatos.push({
+    id: uid(DB.consumosPlatos), fecha: fecha, hora: nowHM(), recetaId: recetaId, recetaManual: recetaManual,
+    personalInterno: personalInterno, personalExterno: personalExterno,
+    empresaExterna: empresaExterna, servicio: servicio, ponton: state.ponton
+  });
+  saveDB();
+  renderPage('platos');
+}
+/* ============================================================
+   RENDER: CONSUMO (registro de insumos utilizados — Cocinero)
+   ============================================================ */
+function renderConsumo(){
+  const p = state.ponton;
+  const cats = Array.from(new Set(DB.ingredientes.map(function(i){return i.categoria;})));
+  state.consumoFechaVista = state.consumoFechaVista || todayStr();
+  const fechaVista = state.consumoFechaVista;
+
+  const delDia = DB.consumosInventario.filter(function(c){ return c.ponton===p && c.fecha===fechaVista; });
+  const porServicio = {Desayuno:0, Almuerzo:0, Cena:0};
+  delDia.forEach(function(c){ porServicio[c.servicio] = (porServicio[c.servicio]||0) + 1; });
+  const rows = delDia.map(function(c){
+    const i = ing(c.ingredienteId);
+    return '<tr><td>'+c.servicio+'</td><td>'+(i?i.emoji+' '+i.nombre:'?')+'</td><td>'+c.cantidad+' '+(i?i.unidad:'')+'</td></tr>';
+  }).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Sin registros para esta fecha</td></tr>';
+
+  return (
+  '<div class="sec-header"><span class="sec-title">Consumo de Insumos — '+p+'</span><button class="btn btn-primary btn-sm" onclick="openIngresoConsumo()">+ Ingreso</button></div>'+
+  '<div class="two-col">'+
+    '<div>'+
+      '<div class="sec-header"><span class="sec-title">Registros</span>'+
+        '<input type="date" id="consumo-fecha-vista" value="'+fechaVista+'" onchange="cambiarFechaConsumo(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+
+      '</div>'+
+      '<div class="table-wrap"><table><thead><tr><th>Servicio</th><th>Producto</th><th>Cantidad usada</th></tr></thead>'+
+      '<tbody>'+rows+'</tbody></table></div>'+
+    '</div>'+
+    '<div>'+
+      '<div class="sec-header"><span class="sec-title">Consumo total del día por servicio</span></div>'+
+      '<div class="cards-grid" style="grid-template-columns:1fr">'+
+        '<div class="card"><div style="display:flex;justify-content:space-between"><span>🌅 Desayuno</span><strong>'+porServicio.Desayuno+' registros</strong></div></div>'+
+        '<div class="card"><div style="display:flex;justify-content:space-between"><span>☀️ Almuerzo</span><strong>'+porServicio.Almuerzo+' registros</strong></div></div>'+
+        '<div class="card"><div style="display:flex;justify-content:space-between"><span>🌙 Cena</span><strong>'+porServicio.Cena+' registros</strong></div></div>'+
+      '</div>'+
+    '</div>'+
+  '</div>'
+  );
+}
+function cambiarFechaConsumo(v){ state.consumoFechaVista = v || todayStr(); renderPage('consumo'); }
+function openIngresoConsumo(){
+  const cats = Array.from(new Set(DB.ingredientes.map(function(i){return i.categoria;})));
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">+ Ingreso — Consumo de insumos</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Fecha</label><input id="i-fecha" type="date" value="'+todayStr()+'"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Servicio</label><select id="i-servicio"><option>Desayuno</option><option selected>Almuerzo</option><option>Cena</option></select></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Categoría</label><select id="i-cat" onchange="refreshProductoOptions()">'+
+      cats.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('')+
+    '</select></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Producto</label><select id="i-producto"></select></div>'+
+    '<div class="form-group" style="margin-bottom:16px"><label>Cantidad utilizada</label><input id="i-cantidad" type="number" step="0.01" min="0" value="1"></div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveIngresoConsumo()">Registrar</button></div>'
+  );
+  refreshProductoOptions();
+}
+function refreshProductoOptions(){
+  const cat = document.getElementById('i-cat').value;
+  document.getElementById('i-producto').innerHTML = ingredienteOptions(null, cat);
+}
+function saveIngresoConsumo(){
+  const fecha = document.getElementById('i-fecha').value || todayStr();
+  const servicio = document.getElementById('i-servicio').value;
+  const ingredienteId = parseInt(document.getElementById('i-producto').value,10);
+  const cantidad = parseFloat(document.getElementById('i-cantidad').value)||0;
+  if(!ingredienteId || cantidad<=0){ alert('Selecciona un producto y una cantidad válida'); return; }
+  DB.consumosInventario.push({id: uid(DB.consumosInventario), ingredienteId:ingredienteId, ponton:state.ponton, cantidad:cantidad, servicio:servicio, fecha:fecha});
+  saveDB(); closeModal();
+  state.consumoFechaVista = fecha;
+  renderPage('consumo');
+}
+
+/* ============================================================
+   RENDER: INVENTARIO (solo lectura — Cocinero y Administrador)
+   Mínimo + Máximo, orden con críticos primero
+   ============================================================ */
+function renderInventario(){
+  const p = state.ponton;
+  const cats = Array.from(new Set(DB.ingredientes.map(function(i){return i.categoria;})));
+  state.invCatFiltro = state.invCatFiltro || '';
+
+  let lista = DB.ingredientes.filter(function(i){ return !state.invCatFiltro || i.categoria===state.invCatFiltro; });
+  lista = ordenarPorCritico(lista, function(i){ return estadoStock(stockActual(i.id,p), minimoDe(i.id,p), maximoDe(i.id,p)); });
+
+  const rows = lista.map(function(i){
+    const actual = stockActual(i.id,p);
+    const min = minimoDe(i.id,p);
+    const max = maximoDe(i.id,p);
+    const st = estadoStock(actual,min,max);
+    const rango = Math.max(1, max>0 ? max : min*2);
+    const pct = Math.min(100, Math.round(actual/rango*100));
+    const color = st==='ok' ? 'var(--success)' : (st==='alto' ? '#2563eb' : 'var(--danger)');
+    return '<tr data-name="'+i.nombre.toLowerCase()+'" data-cat="'+i.categoria+'">'+
+      '<td>'+i.emoji+' '+i.nombre+'</td><td>'+i.categoria+'</td><td>'+actual+' '+i.unidad+'</td><td>'+min+' '+i.unidad+'</td><td>'+(max||'—')+(max?' '+i.unidad:'')+'</td>'+
+      '<td style="width:150px"><div class="prog-bar"><div class="prog-fill" style="width:'+pct+'%;background:'+color+'"></div></div></td>'+
+      '<td>'+estadoBadge(st)+'</td></tr>';
+  }).join('');
+
+  return (
+  '<div class="sec-header"><span class="sec-title">Inventario Actual — '+p+'</span></div>'+
+  '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Ordenado con los ingredientes en estado <strong>Bajo</strong> primero.</div>'+
+  '<div class="table-wrap"><div class="table-top">'+
+    '<div class="table-search"><span>🔍</span><input id="inv-search" oninput="applyInvFilters()" placeholder="Buscar en inventario..."></div>'+
+    '<select onchange="setInvCatFiltro(this.value)"><option value="">Todas las categorías</option>'+cats.map(function(c){return '<option value="'+c+'"'+(state.invCatFiltro===c?' selected':'')+'>'+c+'</option>';}).join('')+'</select>'+
+  '</div>'+
+  '<table><thead><tr><th>Ingrediente</th><th>Categoría</th><th>Stock actual</th><th>Mínimo</th><th>Máximo</th><th>Progreso</th><th>Estado</th></tr></thead>'+
+  '<tbody id="inv-tbody">'+rows+'</tbody></table></div>'
+  );
+}
+function setInvCatFiltro(v){ state.invCatFiltro = v; renderPage(state.page); }
+function applyInvFilters(){
+  const q = document.getElementById('inv-search').value.toLowerCase();
+  document.querySelectorAll('#inv-tbody tr').forEach(function(tr){
+    const name = tr.getAttribute('data-name');
+    tr.style.display = name.indexOf(q)!==-1 ? '' : 'none';
+  });
+}
+
+/* ============================================================
+   RENDER: RECEPCIONES (Cocinero) — confirmar guías de despacho
+   ============================================================ */
+function renderRecepcionesChef(){
+  const p = state.ponton;
+  const guias = DB.guiasDespacho.filter(function(g){ return g.ponton===p; })
+    .sort(function(a,b){ return b.fecha.localeCompare(a.fecha); });
+
+  const rows = guias.map(function(g){
+    const itemsTxt = g.items.map(function(it){ const i = ing(it.ingredienteId); return (i?i.nombre:'?')+' ('+it.cantidad+' '+(i?i.unidad:'')+')'; }).join(', ');
+    let estadoTxt = '<span class="status-badge sb-pending">Pendiente de recepción</span>';
+    if(g.recepcion.estado==='conforme') estadoTxt = '<span class="status-badge sb-ok">Recepcionada conforme</span>';
+    else if(g.recepcion.estado==='observaciones') estadoTxt = '<span class="status-badge sb-critical">Con observaciones</span>';
+    const accion = g.recepcion.estado==='pendiente'
+      ? '<button class="btn btn-primary btn-sm" onclick="openRecepcionGuia('+g.id+')">Recepcionar</button>'
+      : '<button class="btn btn-secondary btn-sm" onclick="verRecepcionGuia('+g.id+')">Ver</button>';
+    return '<tr><td>'+g.numeroGuia+'</td><td>'+fmtDMY(new Date(g.fecha))+'</td><td style="font-size:12px">'+itemsTxt+'</td><td>'+estadoTxt+'</td><td>'+(g.recepcion.fechaRecepcion?fmtDMY(new Date(g.recepcion.fechaRecepcion)):'—')+'</td><td>'+accion+'</td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Sin guías de despacho para este centro</td></tr>';
+
+  return (
+  '<div class="sec-header"><span class="sec-title">Recepciones — '+p+'</span></div>'+
+  '<div class="table-wrap"><table><thead><tr><th>N° Guía</th><th>Fecha guía</th><th>Contenido</th><th>Estado</th><th>Fecha recepción</th><th></th></tr></thead>'+
+  '<tbody>'+rows+'</tbody></table></div>'
+  );
+}
+function openRecepcionGuia(id){
+  const g = DB.guiasDespacho.find(function(x){return x.id===id;});
+  const itemsTxt = g.items.map(function(it){ const i = ing(it.ingredienteId); return '<li>'+(i?i.nombre:'?')+' — '+it.cantidad+' '+(i?i.unidad:'')+'</li>'; }).join('');
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:6px">Recepcionar guía '+g.numeroGuia+'</h3>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Fecha de guía: '+fmtDMY(new Date(g.fecha))+'</div>'+
+    '<ul style="font-size:13px;margin-bottom:16px;padding-left:18px">'+itemsTxt+'</ul>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Estado de recepción</label><select id="r-estado" onchange="toggleObsRecepcion()"><option value="conforme">Recibido conforme</option><option value="observaciones">Recibido con observaciones</option></select></div>'+
+    '<div class="form-group" id="r-obs-wrap" style="margin-bottom:16px;display:none"><label>Observaciones (breve)</label><textarea id="r-observaciones" rows="2" style="resize:vertical" placeholder="Ej: faltaron 2kg de..."></textarea></div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="confirmarRecepcion('+id+')">Confirmar recepción</button></div>'
+  );
+}
+function toggleObsRecepcion(){
+  document.getElementById('r-obs-wrap').style.display = (document.getElementById('r-estado').value==='observaciones') ? 'block' : 'none';
+}
+function confirmarRecepcion(id){
+  const g = DB.guiasDespacho.find(function(x){return x.id===id;});
+  const estado = document.getElementById('r-estado').value;
+  const obs = document.getElementById('r-observaciones') ? document.getElementById('r-observaciones').value.trim() : '';
+  if(estado==='observaciones' && !obs){ alert('Describe brevemente la observación.'); return; }
+  g.recepcion = { estado: estado, observaciones: estado==='observaciones'?obs:'', fechaRecepcion: todayStr() };
+  saveDB(); closeModal(); renderPage('recepcioneschef');
+}
+function verRecepcionGuia(id){
+  const g = DB.guiasDespacho.find(function(x){return x.id===id;});
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:10px">Guía '+g.numeroGuia+'</h3>'+
+    '<p style="font-size:13px;line-height:1.8">Estado: '+(g.recepcion.estado==='conforme'?'Recepcionada conforme':'Recepcionada con observaciones')+'<br>'+
+    'Fecha recepción: '+(g.recepcion.fechaRecepcion?fmtDMY(new Date(g.recepcion.fechaRecepcion)):'—')+
+    (g.recepcion.observaciones ? '<br>Observaciones: '+g.recepcion.observaciones : '')+'</p>'+
+    '<div class="form-actions"><button class="btn btn-primary" style="flex:1" onclick="closeModal()">Cerrar</button></div>'
+  );
+}
+/* ============================================================
+   RENDER: DASHBOARD (Administrador — agrupado por Área)
+   ============================================================ */
+function centrosSeleccionados(){
+  if(!state.dashboardCentros) state.dashboardCentros = nombresCentros();
+  // depurar centros que ya no existan
+  state.dashboardCentros = state.dashboardCentros.filter(function(c){ return nombresCentros().indexOf(c)>-1; });
+  if(!state.dashboardCentros.length) state.dashboardCentros = nombresCentros();
+  return state.dashboardCentros;
+}
+function toggleCentroDashboard(p){
+  const list = centrosSeleccionados();
+  const idx = list.indexOf(p);
+  if(idx>-1) list.splice(idx,1); else list.push(p);
+  state.dashboardCentros = list.length ? list : [p];
+  renderPage('dashboard');
+}
+function toggleAreaDashboard(area){
+  const grupos = areasAgrupadas();
+  const centrosArea = grupos[area]||[];
+  const sel = centrosSeleccionados();
+  const todosSeleccionados = centrosArea.every(function(c){ return sel.indexOf(c)>-1; });
+  let nuevo;
+  if(todosSeleccionados){ nuevo = sel.filter(function(c){ return centrosArea.indexOf(c)===-1; }); }
+  else { nuevo = sel.slice(); centrosArea.forEach(function(c){ if(nuevo.indexOf(c)===-1) nuevo.push(c); }); }
+  state.dashboardCentros = nuevo.length ? nuevo : centrosArea;
+  renderPage('dashboard');
+}
+function centroChecklistHtml(){
+  const sel = centrosSeleccionados();
+  const grupos = areasAgrupadas();
+  return Object.keys(grupos).map(function(area){
+    const centrosArea = grupos[area];
+    const todos = centrosArea.every(function(c){ return sel.indexOf(c)>-1; });
+    return '<div style="margin-bottom:10px">'+
+      '<label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;text-transform:none;cursor:pointer;margin-bottom:4px">'+
+        '<input type="checkbox" '+(todos?'checked':'')+' onchange="toggleAreaDashboard(\''+area+'\')"> Área '+area+
+      '</label>'+
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;padding-left:20px">'+
+        centrosArea.map(function(c){
+          const checked = sel.indexOf(c)>-1;
+          return '<label style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;text-transform:none;cursor:pointer">'+
+            '<input type="checkbox" '+(checked?'checked':'')+' onchange="toggleCentroDashboard(\''+c+'\')"> '+c+
+          '</label>';
+        }).join('')+
+      '</div></div>';
+  }).join('');
+}
+function renderDashboard(){
+  const centros = centrosSeleccionados();
+  const critCount = DB.ingredientes.filter(function(i){
+    return centros.some(function(p){ return estadoStock(stockActual(i.id,p), minimoDe(i.id,p), maximoDe(i.id,p))==='bajo'; });
+  }).length;
+  const grupos = areasAgrupadas();
+  const valorPorArea = Object.keys(grupos).map(function(area){
+    const centrosArea = grupos[area].filter(function(c){ return centros.indexOf(c)>-1; });
+    const valor = centrosArea.reduce(function(sTot,p){
+      return sTot + DB.ingredientes.reduce(function(s,i){ return s + stockActual(i.id,p)*i.costo; },0);
+    },0);
+    return {area:area, valor:valor, centros:centrosArea.length};
+  }).filter(function(v){ return v.centros>0; });
+  const valorTotal = valorPorArea.reduce(function(s,v){return s+v.valor;},0);
+
+  const diaLabels = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const days = []; for(let k=6;k>=0;k--) days.push(addDays(new Date(), -k));
+  const bars = days.map(function(d){
+    const key = dstr(d);
+    const total = DB.consumosPlatos.filter(function(c){ return centros.indexOf(c.ponton)>-1 && c.fecha===key; })
+      .reduce(function(s,c){ return s+c.personalInterno+c.personalExterno; },0);
+    return { label: diaLabels[d.getDay()], total: total };
+  });
+  const maxBar = Math.max.apply(null, [1].concat(bars.map(function(b){return b.total;})));
+  const barsHtml = bars.map(function(b){
+    return '<div class="bar-col"><div class="bar-val">'+b.total+'</div><div class="bar" style="height:'+Math.max(4,(b.total/maxBar*100))+'%"></div><div class="bar-label">'+b.label+'</div></div>';
+  }).join('');
+
+  const alerts = [];
+  centros.forEach(function(p){
+    const c = centroPorNombre(p);
+    DB.ingredientes.forEach(function(i){
+      const base = DB.inventarioBase[p] && DB.inventarioBase[p][i.id];
+      if(!base) return;
+      if(base.venceEnDias<=0) alerts.push({tipo:'danger', icon:'🚨', title:i.nombre+' — Vencido', sub:(c?c.area+' · ':'')+p, detId:i.id, detP:p});
+      else if(base.venceEnDias<=DB.config.alertaVencimientoDias) alerts.push({tipo:'warning', icon:'⏰', title:i.nombre+' — Vence en '+base.venceEnDias+' días', sub:(c?c.area+' · ':'')+p, detId:i.id, detP:p});
+      const st = estadoStock(stockActual(i.id,p), base.minimo, base.maximo);
+      if(st==='bajo') alerts.push({tipo:'warning', icon:'📉', title:i.nombre+' — Stock bajo', sub:(c?c.area+' · ':'')+p+' · '+stockActual(i.id,p)+' '+i.unidad+' disp. (mín '+base.minimo+')', detId:i.id, detP:p});
+    });
+  });
+  const alertsHtml = alerts.slice(0,8).map(function(a){
+    return '<div class="alert-card '+a.tipo+'" style="cursor:pointer" onclick="verDetalleAlerta('+a.detId+',\''+a.detP+'\')"><span class="alert-icon">'+a.icon+'</span><div class="alert-text"><div class="alert-title">'+a.title+'</div><div class="alert-sub">'+a.sub+'</div></div></div>';
+  }).join('') || '<div class="empty-state"><p>Sin alertas por ahora 🎉</p></div>';
+
+  const valorRows = valorPorArea.map(function(v){
+    return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span>Área '+v.area+' <span style="color:var(--text-muted);font-size:11px">('+v.centros+' centros)</span></span><strong>'+money(v.valor)+'</strong></div>';
+  }).join('');
+
+  return (
+  '<div class="card" style="margin-bottom:20px;padding:14px 18px">'+
+    '<div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;font-weight:600">Áreas y centros incluidos en este dashboard</div>'+
+    centroChecklistHtml()+
+  '</div>'+
+  '<div class="cards-grid">'+
+    '<div class="card card-accent"><div class="card-icon">🥕</div><div class="card-label">Ingredientes</div><div class="card-value">'+DB.ingredientes.length+'</div><div class="card-sub">Catálogo activo</div></div>'+
+    '<div class="card card-success"><div class="card-icon">📋</div><div class="card-label">Recetas</div><div class="card-value">'+DB.recetas.length+'</div><div class="card-sub">En minuta activa</div></div>'+
+    '<div class="card card-warning"><div class="card-icon">⚠️</div><div class="card-label">Stock Bajo</div><div class="card-value">'+critCount+'</div><div class="card-sub">'+centros.length+' centro(s) seleccionado(s)</div></div>'+
+    '<div class="card card-accent2"><div class="card-icon">🚢</div><div class="card-label">Centros activos</div><div class="card-value">'+nombresCentros().length+'</div><div class="card-sub">'+centros.length+' visibles ahora</div></div>'+
+  '</div>'+
+  '<div class="two-col">'+
+    '<div><div class="sec-header"><span class="sec-title">Inventario Valorizado por Área</span></div>'+
+      '<div class="card"><div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Total combinado: '+money(valorTotal)+'</div>'+valorRows+'</div>'+
+    '</div>'+
+    '<div><div class="sec-header"><span class="sec-title">Consumo Semanal</span></div>'+
+      '<div class="chart-wrap"><div class="chart-title">Porciones servidas por día — centros seleccionados</div><div class="bar-chart">'+barsHtml+'</div></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="sec-header"><span class="sec-title">Alertas</span></div>'+alertsHtml
+  );
+}
+function verDetalleAlerta(ingredienteId, ponton){
+  const i = ing(ingredienteId);
+  const actual = stockActual(ingredienteId, ponton);
+  const min = minimoDe(ingredienteId, ponton);
+  const max = maximoDe(ingredienteId, ponton);
+  const base = DB.inventarioBase[ponton][ingredienteId];
+  const c = centroPorNombre(ponton);
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:10px">'+i.emoji+' '+i.nombre+'</h3>'+
+    '<p style="font-size:13px;line-height:1.8">Área: <strong>'+(c?c.area:'—')+'</strong><br>Centro: <strong>'+ponton+'</strong><br>Stock actual: <strong>'+actual+' '+i.unidad+'</strong><br>Mínimo: '+min+' '+i.unidad+' · Máximo: '+(max||'—')+'<br>Estado: '+estadoBadge(estadoStock(actual,min,max))+'<br>Vence en: '+base.venceEnDias+' días</p>'+
+    '<div class="form-actions"><button class="btn btn-primary" style="flex:1" onclick="closeModal()">Cerrar</button></div>'
+  );
+}
+
+/* ============================================================
+   RENDER: CENTROS (Administrador — CRUD de centros/áreas)
+   ============================================================ */
+function renderCentros(){
+  const hoy = todayStr();
+  const rows = DB.centros.slice().sort(function(a,b){ return a.area.localeCompare(b.area) || a.nombre.localeCompare(b.nombre); }).map(function(c){
+    const activo = !c.fechaCierre || c.fechaCierre>hoy;
+    return '<tr data-name="'+c.nombre.toLowerCase()+' '+c.area.toLowerCase()+'"><td>'+c.nombre+'</td><td>'+c.area+'</td><td>'+fmtDMY(new Date(c.fechaApertura))+'</td>'+
+      '<td>'+(c.fechaCierre?fmtDMY(new Date(c.fechaCierre)):'—')+'</td>'+
+      '<td>'+(activo?'<span class="status-badge sb-ok">Activo</span>':'<span class="status-badge sb-critical">Cerrado</span>')+'</td>'+
+      '<td><button class="btn btn-secondary btn-sm" onclick="openEditCentro('+c.id+')">Editar</button></td></tr>';
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Centros y Áreas</span><button class="btn btn-primary btn-sm" onclick="openAddCentro()">+ Nuevo centro</button></div>'+
+  '<div class="table-wrap"><div class="table-top">'+
+    '<div style="font-size:13px;color:var(--text-muted)">'+DB.centros.length+' centros registrados · '+nombresCentros().length+' activos</div>'+
+    '<div class="table-search"><span>🔍</span><input id="centro-search" oninput="filterTable(\'centro-search\',\'centro-tbody\')" placeholder="Buscar centro o área..."></div>'+
+  '</div>'+
+  '<table><thead><tr><th>Centro</th><th>Área</th><th>Fecha apertura</th><th>Fecha cierre</th><th>Estado</th><th></th></tr></thead>'+
+  '<tbody id="centro-tbody">'+rows+'</tbody></table></div>'
+  );
+}
+function openAddCentro(){
+  const areas = Array.from(new Set(DB.centros.map(function(c){return c.area;})));
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Nuevo centro</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre del centro</label><input id="f-nombre" placeholder="Ej: Isla Nueva"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Área</label><input id="f-area" list="area-list" placeholder="Ej: Chiloé">'+
+      '<datalist id="area-list">'+areas.map(function(a){return '<option value="'+a+'">';}).join('')+'</datalist></div>'+
+    '<div class="form-group" style="margin-bottom:16px"><label>Fecha de apertura</label><input id="f-apertura" type="date" value="'+todayStr()+'"></div>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveCentro()">Guardar</button></div>'
+  );
+}
+function openEditCentro(id){
+  const c = DB.centros.find(function(x){return x.id===id;});
+  const areas = Array.from(new Set(DB.centros.map(function(x){return x.area;})));
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Editar centro</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Nombre del centro</label><input id="f-nombre" value="'+esc(c.nombre)+'"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Área</label><input id="f-area" list="area-list" value="'+esc(c.area)+'">'+
+      '<datalist id="area-list">'+areas.map(function(a){return '<option value="'+a+'">';}).join('')+'</datalist></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">'+
+      '<div class="form-group"><label>Fecha apertura</label><input id="f-apertura" type="date" value="'+c.fechaApertura+'"></div>'+
+      '<div class="form-group"><label>Fecha cierre (opcional)</label><input id="f-cierre" type="date" value="'+(c.fechaCierre||'')+'"></div>'+
+    '</div>'+
+    '<div class="form-actions">'+
+      '<button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="saveCentro('+id+')">Guardar</button>'+
+      '<button class="btn" style="background:var(--danger);color:#fff" onclick="deleteCentro('+id+')">Eliminar</button>'+
+    '</div>'
+  );
+}
+function saveCentro(editId){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  const area = document.getElementById('f-area').value.trim() || 'Sin área';
+  const apertura = document.getElementById('f-apertura').value || todayStr();
+  const cierreEl = document.getElementById('f-cierre');
+  const cierre = cierreEl ? (cierreEl.value || null) : null;
+  if(!nombre){ alert('Ingresa el nombre del centro'); return; }
+  if(editId){
+    const c = DB.centros.find(function(x){return x.id===editId;});
+    Object.assign(c, {nombre:nombre, area:area, fechaApertura:apertura, fechaCierre:cierre});
+  } else {
+    const id = uid(DB.centros);
+    DB.centros.push({id:id, nombre:nombre, area:area, fechaApertura:apertura, fechaCierre:cierre});
+    ensureInventarioParaCentro(nombre);
+  }
+  saveDB(); closeModal(); renderPage('centros');
+}
+function deleteCentro(id){
+  if(!confirm('¿Eliminar este centro? Los datos históricos asociados no se borrarán.')) return;
+  DB.centros = DB.centros.filter(function(c){ return c.id!==id; });
+  saveDB(); closeModal(); renderPage('centros');
+}
+
+/* ============================================================
+   RENDER: INVENTARIO INICIAL (Administrador — área + centro desplegables)
+   ============================================================ */
+function renderInventarioInicial(){
+  if(nombresCentros().indexOf(state.ponton)===-1) state.ponton = nombresCentros()[0];
+  const p = state.ponton;
+  ensureInventarioParaCentro(p);
+  const rows = DB.ingredientes.map(function(i){
+    const base = DB.inventarioBase[p][i.id] || {stockInicial:0};
+    return '<tr><td>'+i.emoji+' '+i.nombre+'</td><td>'+i.categoria+'</td>'+
+      '<td><input type="number" step="0.01" style="width:110px" value="'+base.stockInicial+'" onchange="saveStockInicial('+i.id+',this.value)"></td>'+
+      '<td>'+i.unidad+'</td></tr>';
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Inventario Inicial</span></div>'+
+  '<div class="card" style="margin-bottom:16px;display:flex;gap:14px;align-items:center">'+
+    '<label style="font-size:12px;font-weight:600;text-transform:none">Área / Centro:</label>'+
+    '<select onchange="onPontonChange(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+centroOptionsAgrupados(p)+'</select>'+
+  '</div>'+
+  '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Define la cantidad con la que parte cada producto en <strong>'+p+'</strong>. Los cambios se guardan automáticamente.</div>'+
+  '<div class="table-wrap"><table><thead><tr><th>Ingrediente</th><th>Categoría</th><th>Stock inicial</th><th>Unidad</th></tr></thead>'+
+  '<tbody>'+rows+'</tbody></table></div>'
+  );
+}
+function saveStockInicial(ingredienteId, valor){
+  const v = parseFloat(valor)||0;
+  DB.inventarioBase[state.ponton][ingredienteId].stockInicial = v;
+  saveDB();
+}
+
+/* ============================================================
+   RENDER: DESPACHO (Administrador — guías con múltiples ítems)
+   ============================================================ */
+function renderCompras(){
+  const rows = DB.guiasDespacho.slice().sort(function(a,b){ return b.fecha.localeCompare(a.fecha); }).map(function(g){
+    const cantItems = g.items.length;
+    let estadoTxt = '<span class="status-badge sb-pending">Pendiente</span>';
+    if(g.recepcion.estado==='conforme') estadoTxt = '<span class="status-badge sb-ok">Conforme</span>';
+    else if(g.recepcion.estado==='observaciones') estadoTxt = '<span class="status-badge sb-critical">Con observaciones</span>';
+    return '<tr data-name="'+g.numeroGuia.toLowerCase()+' '+g.ponton.toLowerCase()+'"><td>'+g.numeroGuia+'</td><td>'+g.ponton+'</td><td>'+fmtDMY(new Date(g.fecha))+'</td><td>'+cantItems+' producto(s)</td><td>'+estadoTxt+'</td><td><button class="btn btn-secondary btn-sm" onclick="verGuiaDetalle('+g.id+')">Ver detalle</button></td></tr>';
+  }).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Sin guías de despacho registradas</td></tr>';
+  return (
+  '<div class="sec-header"><span class="sec-title">Despacho</span><button class="btn btn-primary btn-sm" onclick="openNuevaGuia()">+ Nueva guía de despacho</button></div>'+
+  '<div class="table-wrap"><div class="table-top">'+
+    '<div class="table-search"><span>🔍</span><input id="desp-search" oninput="filterTable(\'desp-search\',\'desp-tbody\')" placeholder="Buscar guía o centro..."></div>'+
+  '</div>'+
+  '<table><thead><tr><th>N° Guía</th><th>Centro</th><th>Fecha envío</th><th>Ítems</th><th>Recepción</th><th></th></tr></thead>'+
+  '<tbody id="desp-tbody">'+rows+'</tbody></table></div>'
+  );
+}
+function verGuiaDetalle(id){
+  const g = DB.guiasDespacho.find(function(x){return x.id===id;});
+  const rows = g.items.map(function(it){
+    const i = ing(it.ingredienteId);
+    return '<tr><td>'+(i?i.emoji+' '+i.nombre:'?')+'</td><td>'+(i?i.categoria:'')+'</td><td>'+it.cantidad+' '+(i?i.unidad:'')+'</td></tr>';
+  }).join('');
+  const recTxt = g.recepcion.estado==='pendiente' ? 'Pendiente de recepción por el Cocinero' :
+    (g.recepcion.estado==='conforme' ? 'Recepcionada conforme el '+fmtDMY(new Date(g.recepcion.fechaRecepcion)) :
+    'Recepcionada con observaciones el '+fmtDMY(new Date(g.recepcion.fechaRecepcion))+': "'+g.recepcion.observaciones+'"');
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:6px">Guía '+g.numeroGuia+'</h3>'+
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Centro: '+g.ponton+' · Fecha de envío: '+fmtDMY(new Date(g.fecha))+'</div>'+
+    '<table class="nutri-table"><thead><tr><th style="font-size:10px;color:var(--text-muted)">Ingrediente</th><th style="font-size:10px;color:var(--text-muted)">Categoría</th><th style="font-size:10px;color:var(--text-muted)">Cantidad</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<div style="font-size:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)"><strong>Recepción:</strong> '+recTxt+'</div>'+
+    '<div class="form-actions"><button class="btn btn-primary" style="flex:1" onclick="closeModal()">Cerrar</button></div>'
+  );
+}
+function openNuevaGuia(){
+  openModal(
+    '<h3 style="font-family:\'DM Serif Display\',serif;margin-bottom:16px">Nueva guía de despacho</h3>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>N° de guía</label><input id="g-numero" placeholder="Ej: GD-2026-0120"></div>'+
+    '<div class="form-group" style="margin-bottom:12px"><label>Centro destino</label><select id="g-ponton">'+centroOptionsAgrupados(state.ponton)+'</select></div>'+
+    '<div class="form-group" style="margin-bottom:16px"><label>Fecha de envío</label><input id="g-fecha" type="date" value="'+todayStr()+'"></div>'+
+    '<label style="display:block;margin-bottom:6px">Productos despachados</label>'+
+    '<div id="ing-rows-container">'+ingRowHtmlGuia(0)+'</div>'+
+    '<button type="button" class="btn btn-secondary btn-sm" style="margin-bottom:16px" onclick="document.getElementById(\'ing-rows-container\').insertAdjacentHTML(\'beforeend\', ingRowHtmlGuia(Date.now()))">+ Agregar producto</button>'+
+    '<div class="form-actions"><button class="btn btn-secondary" style="flex:1" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" style="flex:1" onclick="saveGuia()">Registrar guía</button></div>'
+  );
+}
+function ingRowHtmlGuia(rowIdx, selectedId, cantidad){
+  return '<div class="ing-row" style="display:flex;gap:8px;margin-bottom:8px" data-row="'+rowIdx+'">'+
+    '<select class="ing-row-select" style="flex:2">'+ingredienteOptions(selectedId)+'</select>'+
+    '<input class="ing-row-cant" type="number" step="0.01" style="flex:1" value="'+(cantidad||1)+'" placeholder="Cantidad">'+
+    '<button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">✕</button>'+
+  '</div>';
+}
+function saveGuia(){
+  const numeroGuia = document.getElementById('g-numero').value.trim();
+  const ponton = document.getElementById('g-ponton').value;
+  const fecha = document.getElementById('g-fecha').value || todayStr();
+  const items = [];
+  document.querySelectorAll('#ing-rows-container .ing-row').forEach(function(r){
+    const id = parseInt(r.querySelector('.ing-row-select').value,10);
+    const cant = parseFloat(r.querySelector('.ing-row-cant').value)||0;
+    if(id && cant>0) items.push({ingredienteId:id, cantidad:cant});
+  });
+  if(!numeroGuia || !items.length){ alert('Ingresa el número de guía y al menos un producto.'); return; }
+  DB.guiasDespacho.push({
+    id: uid(DB.guiasDespacho), numeroGuia:numeroGuia, ponton:ponton, fecha:fecha, items:items,
+    recepcion:{estado:'pendiente', observaciones:'', fechaRecepcion:null}
+  });
+  saveDB(); closeModal(); renderPage('compras');
+}
+
+/* ============================================================
+   RENDER: CONSUMOS (Administrador — agregado por período)
+   ============================================================ */
+function renderConsumosAdmin(){
+  state.consAdminPeriodo = state.consAdminPeriodo || 'dia';
+  state.consAdminFecha = state.consAdminFecha || todayStr();
+  const periodo = state.consAdminPeriodo;
+  const fecha = state.consAdminFecha;
+  const range = periodRange(fecha, periodo);
+  const grupos = areasAgrupadas();
+
+  const porCentro = {};
+  nombresCentros().forEach(function(p){ porCentro[p] = {Desayuno:0, Almuerzo:0, Cena:0, total:0}; });
+  DB.consumosInventario.forEach(function(c){
+    if(!inRange(c.fecha, range[0], range[1])) return;
+    if(!porCentro[c.ponton]) return;
+    porCentro[c.ponton][c.servicio] = (porCentro[c.ponton][c.servicio]||0) + 1;
+    porCentro[c.ponton].total += 1;
+  });
+  const rows = Object.keys(grupos).map(function(area){
+    const encabezado = '<tr style="background:var(--bg-subtle)"><td colspan="5" style="font-weight:700;font-size:12px">Área '+area+'</td></tr>';
+    const filas = grupos[area].map(function(p){
+      const d = porCentro[p];
+      return '<tr><td style="padding-left:22px">'+p+'</td><td>'+d.Desayuno+'</td><td>'+d.Almuerzo+'</td><td>'+d.Cena+'</td><td><strong>'+d.total+'</strong></td></tr>';
+    }).join('');
+    return encabezado+filas;
+  }).join('');
+
+  function tabBtn(key,label){
+    const active = periodo===key;
+    return '<button class="btn '+(active?'btn-primary':'btn-secondary')+' btn-sm" onclick="setConsAdminPeriodo(\''+key+'\')">'+label+'</button>';
+  }
+
+  return (
+  '<div class="sec-header"><span class="sec-title">Consumos por Centro</span></div>'+
+  '<div class="card" style="margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap">'+
+    '<div style="display:flex;gap:8px">'+tabBtn('dia','Día')+tabBtn('semana','Semana')+tabBtn('mes','Mes')+'</div>'+
+    '<input type="date" value="'+fecha+'" onchange="setConsAdminFecha(this.value)" style="border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px">'+
+    '<span style="font-size:11px;color:var(--text-muted)">Rango: '+fmtDMY(range[0])+' — '+fmtDMY(range[1])+'</span>'+
+  '</div>'+
+  '<div class="table-wrap"><table><thead><tr><th>Centro</th><th>Desayuno</th><th>Almuerzo</th><th>Cena</th><th>Total registros</th></tr></thead>'+
+  '<tbody>'+rows+'</tbody></table></div>'
+  );
+}
+function setConsAdminPeriodo(p){ state.consAdminPeriodo = p; renderPage('consumosadmin'); }
+function setConsAdminFecha(f){ state.consAdminFecha = f || todayStr(); renderPage('consumosadmin'); }
+
+/* ============================================================
+   RENDER: RECEPCIONES (Administrador — vista consolidada por área/centro)
+   ============================================================ */
+function renderRecepcionesAdmin(){
+  const grupos = areasAgrupadas();
+  const rows = Object.keys(grupos).map(function(area){
+    const encabezado = '<tr style="background:var(--bg-subtle)"><td colspan="5" style="font-weight:700;font-size:12px">Área '+area+'</td></tr>';
+    const guiasArea = DB.guiasDespacho.filter(function(g){ return grupos[area].indexOf(g.ponton)>-1; });
+    const filas = guiasArea.map(function(g){
+      let estadoTxt = '<span class="status-badge sb-pending">Pendiente</span>';
+      if(g.recepcion.estado==='conforme') estadoTxt = '<span class="status-badge sb-ok">Conforme</span>';
+      else if(g.recepcion.estado==='observaciones') estadoTxt = '<span class="status-badge sb-critical">Con observaciones</span>';
+      return '<tr><td style="padding-left:22px">'+g.ponton+'</td><td>'+g.numeroGuia+'</td><td>'+(g.recepcion.fechaRecepcion?fmtDMY(new Date(g.recepcion.fechaRecepcion)):'—')+'</td><td>'+estadoTxt+'</td><td style="font-size:12px">'+(g.recepcion.observaciones||'—')+'</td></tr>';
+    }).join('') || '<tr><td colspan="5" style="padding-left:22px;color:var(--text-muted);font-size:12px">Sin guías en esta área</td></tr>';
+    return encabezado+filas;
+  }).join('');
+  return (
+  '<div class="sec-header"><span class="sec-title">Recepciones</span></div>'+
+  '<div class="table-wrap"><table><thead><tr><th>Centro</th><th>N° Guía</th><th>Fecha recepción</th><th>Estado</th><th>Observaciones</th></tr></thead>'+
+  '<tbody>'+rows+'</tbody></table></div>'
+  );
+}
+/* ============================================================
+   NAVEGACIÓN / LOGIN / ARRANQUE
+   ============================================================ */
+const pageTitles = {
+  dashboard:'Dashboard', centros:'Centros', ingredientes:'Ingredientes', recetas:'Recetas',
+  inventarioinicial:'Inventario Inicial', inventario:'Inventario Actual',
+  compras:'Despacho', consumo:'Consumo de Insumos', consumosadmin:'Consumos por Centro',
+  recepcioneschef:'Recepciones', recepcionesadmin:'Recepciones',
+  minutas:'Minutas', platos:'Platos Preparados'
+};
+const renderers = {
+  dashboard:renderDashboard, centros:renderCentros, ingredientes:renderIngredientes, recetas:renderRecetas,
+  inventarioinicial:renderInventarioInicial, inventario:renderInventario,
+  compras:renderCompras, consumo:renderConsumo, consumosadmin:renderConsumosAdmin,
+  recepcioneschef:renderRecepcionesChef, recepcionesadmin:renderRecepcionesAdmin,
+  minutas:renderMinutas, platos:renderPlatos
+};
+
+function renderPage(id){
+  state.page = id;
+  const titleEl = document.getElementById('page-title');
+  if(titleEl) titleEl.textContent = pageTitles[id] || id;
+  const root = document.getElementById('page-root');
+  const fn = renderers[id];
+  root.innerHTML = fn ? fn() : '<div class="empty-state"><div class="es-icon">🚧</div><p>Módulo no disponible en esta demo</p></div>';
+}
+function goTo(pageId, navEl){
+  state.editingRecetaId = null;
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  if(navEl) navEl.classList.add('active');
+  renderPage(pageId);
+}
+function selectProfile(el){
+  document.querySelectorAll('.profile-opt').forEach(function(o){ o.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+function renderPontonSelector(){
+  const el = document.getElementById('ponton-selector');
+  el.innerHTML = '🚢 <select id="pontonSelect" onchange="onPontonChange(this.value)" '+(state.role==='chef'?'disabled':'')+' style="border:none;background:transparent;color:#fff;font-size:11px;font-weight:600;">'+centroOptionsAgrupados(state.ponton)+'</select>';
+}
+function onPontonChange(v){ state.ponton = v; renderPage(state.page); }
+
+function doLogin(){
+  const opt = document.querySelector('.profile-opt.selected');
+  state.role = opt ? opt.dataset.role : 'admin';
+  document.getElementById('login-screen').style.display = 'none';
+
+  const roleMeta = {
+    admin: {navId:'nav-admin', label:'Administrador', letter:'A', color:'#c0392b'},
+    chef:  {navId:'nav-chef',  label:'Cocinero',       letter:'C', color:'#27ae60'},
+    nutri: {navId:'nav-nutri', label:'Nutricionista',  letter:'N', color:'#3498db'}
+  };
+  const meta = roleMeta[state.role];
+  const user = DB.usuarios.filter(function(u){return u.rol===state.role;})[0] || DB.usuarios[0];
+  state.ponton = (user && user.ponton && user.ponton!=='Todos' && nombresCentros().indexOf(user.ponton)>-1) ? user.ponton : nombresCentros()[0];
+  state.editingRecetaId = null;
+  state.dashboardCentros = null;
+
+  document.querySelectorAll('#sidebar > div[id^="nav-"]').forEach(function(n){ n.style.display='none'; });
+  document.getElementById(meta.navId).style.display = 'block';
+  document.getElementById('user-role').textContent = meta.label;
+  document.getElementById('user-name').textContent = user ? user.usuario : meta.label;
+  document.getElementById('user-avatar').textContent = meta.letter;
+  document.getElementById('user-avatar').style.background = meta.color;
+  renderPontonSelector();
+
+  const firstItem = document.querySelector('#'+meta.navId+' .nav-item');
+  if(firstItem){
+    const m = firstItem.getAttribute('onclick').match(/goTo\('([^']+)'/);
+    if(m) goTo(m[1], firstItem);
+  }
+}
+function doLogout(){
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+</script>
+</body>
+</html>
